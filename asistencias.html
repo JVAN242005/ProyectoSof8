@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Asistencias IoT - Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <style>
+    /* ----------------------------
+       Estilos generales / layout
+       ---------------------------- */
+    :root{
+      --primary:#003366;
+      --bg:#eef1f6;
+      --card-bg:#ffffff;
+      --muted:#6c757d;
+    }
+
+    body {
+      background: var(--bg);
+      font-size: 16px;
+      color: #222;
+    }
+
+    /* ================= HEADER ================= */
+    header {
+      background: linear-gradient(90deg, #4B0082, #800080);
+      padding: 20px 30px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+
+    header h4 {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.8rem;
+      margin: 0;
+    }
+
+    .btn-back {
+      background: #fff;
+      color: #4B0082;
+      font-weight: 600;
+      border-radius: 12px;
+      padding: 8px 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.2s, background-color 0.3s, color 0.3s;
+      text-decoration: none !important;
+    }
+
+    .btn-back:hover {
+      transform: translateY(-4px);
+      background-color: #9370DB;
+      color: #fff;
+    }
+
+    /* ================= SECCIÓN ================= */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .title-line {
+      width: 6px;
+      height: 28px;
+      border-radius: 6px;
+      background: #4B0082;
+    }
+
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #4B0082;
+      margin: 0;
+    }
+
+
+    /* ----------------------------
+       Cuadros (cards) grandes
+       ---------------------------- */
+    .content-box {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      min-height: 480px;
+      width: 100%;
+    }
+
+    /* Forzar que las dos columnas ocupen más ancho disponible */
+    .col-md-6 {
+      flex: 0 0 50%;
+      max-width: 50%;
+    }
+
+    /* ----------------------------
+       Tablas
+       ---------------------------- */
+    table {
+      font-size: 15px;
+      border-collapse: separate !important;
+      border-spacing: 0 8px !important;
+      width: 100%;
+    }
+
+    .table thead th {
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 10px;
+      font-size: 15px;
+      white-space: nowrap;
+      border: 0;
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    .table tbody tr {
+      background: var(--card-bg);
+      border-radius: 8px;
+    }
+
+    .table tbody td {
+      padding: 10px 8px;
+      vertical-align: middle;
+      background: var(--card-bg);
+      border-top: 1px solid #e9ecef !important;
+      border-bottom: 1px solid #e9ecef !important;
+    }
+
+    /* permitir textos largos en estado (no cortar) */
+    .state-cell {
+      white-space: normal;
+      max-width: 160px;
+    }
+
+    /* cédula con ancho fijo para alineación */
+    .td-cedula {
+      width: 120px;
+      white-space: nowrap;
+    }
+
+    /* Acciones */
+    .action-cell {
+      min-width: 200px;
+      white-space: nowrap;
+    }
+
+    /* Badges */
+    .badge-a { background: #198754; color:#fff; padding:6px 10px; border-radius:8px; font-size:13px; display:inline-block; }
+    .badge-t { background: #ffc107; color:#212529; padding:6px 10px; border-radius:8px; font-size:13px; display:inline-block; }
+    .badge-f { background: #dc3545; color:#fff; padding:6px 10px; border-radius:8px; font-size:13px; display:inline-block; }
+    .badge-j { background: #0d6efd; color:#fff; padding:6px 10px; border-radius:8px; font-size:13px; display:inline-block; }
+    .badge-ok{ background: #28a745; color:#fff; padding:6px 10px; border-radius:8px; font-size:13px; display:inline-block; }
+
+    /* Botones */
+    .small-btn { padding: 0.45rem 0.85rem; font-size:14px !important; }
+    .export-btn { white-space: nowrap; font-size:14px !important; padding:7px 12px; }
+
+    /* filtros area */
+    .filters-area { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+
+    /* Responsive: en pantallas muy pequeñas, dejar las celdas quepa en scroll */
+    @media (max-width: 900px){
+      .col-md-6 { flex: 0 0 100%; max-width: 100%; }
+      .state-cell { max-width: 220px; }
+    }
+
+    .section-header{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+
+    .title-line{
+      width:6px;
+      height:28px;
+      border-radius:6px;
+      background:#003366;
+    }
+
+    .section-title{
+      font-size:22px;
+      font-weight:600;
+      color:#003366;
+      margin:0;
+    }
+
+    /* Caja compacta para justificantes */
+  .just-box {
+    max-height: 350px;          /* controla la altura visible */
+    overflow-y: auto;           /* scroll vertical */
+    overflow-x: auto;           /* scroll horizontal */
+    border-radius: 12px;
+    padding: 12px;
+    background: var(--card-bg);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  }
+
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="container d-flex justify-content-between align-items-center">
+      <h4 class="m-0">Sistema de Asistencias (Demo)</h4>
+      <a href="dashboard.html" class="btn btn-light btn-sm">⬅ Volver</a>
+    </div>
+  </header>
+
+  <div class="container mt-4">
+
+    <!-- controles superiores -->
+    <div class="d-flex gap-2 mb-4 flex-wrap align-items-center">
+      <button id="simEstLlegada" class="btn btn-outline-primary btn-sm small-btn">Llegada estudiante</button>
+      <button id="simEstTarde" class="btn btn-outline-warning btn-sm small-btn">Tarde estudiante</button>
+      <button id="simEstSalida" class="btn btn-outline-success btn-sm small-btn">Salida estudiante</button>
+
+      <button id="simDocLlegada" class="btn btn-outline-success btn-sm small-btn ms-3">Llegada docente</button>
+      <button id="simDocTarde" class="btn btn-outline-danger btn-sm small-btn">Tarde docente</button>
+      <button id="simDocSalida" class="btn btn-outline-secondary btn-sm small-btn">Salida docente</button>
+
+      <div class="ms-auto">
+        <button id="exportAll" class="btn btn-secondary btn-sm export-btn">Exportar todo (CSV)</button>
+      </div>
+    </div>
+
+    <div class="row g-4">
+
+      <!-- ESTUDIANTES -->
+<div class="col-md-6">
+  <div class="content-box">
+
+    <div class="section-header mb-3">
+      <div class="title-line"></div>
+      <h5 class="section-title">
+        <span style="font-size:20px; margin-right:6px;">🎓</span> Estudiantes
+      </h5>
+    </div>
+
+    <div class="filters-area">
+      <input id="filterEst" class="form-control form-control-sm" style="width:170px" placeholder="Buscar...">
+      <select id="filterEstEstado" class="form-select form-select-sm" style="width:150px">
+        <option value="">Todos</option>
+        <option value="A tiempo">A tiempo</option>
+        <option value="Tarde">Tarde</option>
+        <option value="Ausente">Ausente</option>
+        <option value="Justificado">Justificado</option>
+        <option value="Cumplió horario">Cumplió horario</option>
+      </select>
+      <button id="exportEst" class="btn btn-outline-dark btn-sm export-btn">Exportar estudiantes</button>
+    </div>
+
+    <div style="overflow:auto" class="mt-3">
+      <table class="table table-bordered mb-0">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th class="text-center">Cédula</th>
+            <th>Curso</th>
+            <th>Aula</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tbEst"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+
+      <!-- DOCENTES -->
+<div class="col-md-6">
+  <div class="content-box">
+
+    <div class="section-header mb-3">
+      <div class="title-line"></div>
+      <h5 class="section-title">
+        <span style="font-size:20px; margin-right:6px;">📘</span> Docentes
+      </h5>
+    </div>
+
+    <div class="filters-area">
+      <input id="filterDoc" class="form-control form-control-sm" style="width:170px" placeholder="Buscar...">
+      <select id="filterDocEstado" class="form-select form-select-sm" style="width:150px">
+        <option value="">Todos</option>
+        <option value="A tiempo">A tiempo</option>
+        <option value="Tarde">Tarde</option>
+        <option value="Ausente">Ausente</option>
+        <option value="Justificado">Justificado</option>
+        <option value="Cumplió horario">Cumplió horario</option>
+      </select>
+      <button id="exportDoc" class="btn btn-outline-dark btn-sm export-btn">Exportar docentes</button>
+    </div>
+
+    <div style="overflow:auto" class="mt-3">
+      <table class="table table-bordered mb-0">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th class="text-center">Cédula</th>
+            <th>Aula</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tbDoc"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+
+    </div>
+
+    <!-- Justificantes -->
+<div class="mt-4 content-box">
+  
+  <div class="section-header mb-3">
+    <div class="title-line"></div>
+    <h5 class="section-title">
+      <span style="font-size:20px; margin-right:6px;">📄</span> Justificantes registrados
+    </h5>
+  </div>
+
+  <div class="just-box">
+    <table class="table table-bordered" id="tbJust">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Rol</th>
+          <th>Fecha registro</th>
+          <th>Fecha doc</th>
+          <th>Motivo</th>
+          <th>Archivo</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+</div>
+
+
+  </div>
+
+  <!-- MODALES (justificante) -->
+  <div class="modal fade" id="modalJust" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Subir justificante</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <form id="formJust">
+            <input type="hidden" id="just_regId">
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Nombre</label>
+                <input id="just_nombre" class="form-control" required readonly>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">Rol</label>
+                <input id="just_rol" class="form-control" required readonly>
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label">Fecha registro</label>
+                <input id="just_fechaReg" class="form-control" required readonly>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Fecha del documento</label>
+                <input id="just_fechaDoc" type="date" class="form-control" required>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Número acta / referencia</label>
+                <input id="just_ref" class="form-control">
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Motivo / Observación</label>
+                <textarea id="just_motivo" class="form-control" rows="3" required></textarea>
+              </div>
+
+              <div class="col-md-8">
+                <label class="form-label">Archivo (opcional)</label>
+                <input id="just_file" type="file" class="form-control" accept=".pdf,image/*">
+              </div>
+
+              <div class="col-md-4 d-flex align-items-end">
+                <button id="saveJust" type="submit" class="btn btn-primary w-100">Guardar justificante</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalJustView" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Detalle justificante</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="justDetailBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    /*****************************************
+     *  LOGICA JS - LocalStorage + Render
+     *  Nombres claros y comentarios
+     *****************************************/
+
+    // --- helpers (localStorage) ---
+    function getRegistrations() { return JSON.parse(localStorage.getItem('regs') || '[]'); }
+    function saveRegistrations(arr) { localStorage.setItem('regs', JSON.stringify(arr)); }
+
+    function getJustificantes() { return JSON.parse(localStorage.getItem('justs') || '[]'); }
+    function saveJustificantes(arr) { localStorage.setItem('justs', JSON.stringify(arr)); }
+
+    function newId() { return 'id' + Date.now() + Math.floor(Math.random() * 1000); }
+
+    // --- generar cédula PAN (formato: D-XXX-XXX, ejemplo 8-456-789) ---
+    function generateCedula() {
+      const d = String(Math.floor(Math.random() * 9) + 1); // 1-9
+      const part = () => String(Math.floor(Math.random() * 900) + 100); // 100-999
+      return `${d}-${part()}-${part()}`;
+    }
+
+    // --- semilla inicial (si no hay datos) ---
+    function seedDataIfEmpty() {
+      if (!localStorage.getItem('regs')) {
+        const seed = [
+          { id: newId(), nombre: 'Jeremy Valdés', '9-1020-1111': generateCedula(), rol: 'Estudiante', curso: 'DSVIII', aula: '3-105', tipo: 'Entrada', fecha: '2025-11-26', hora: '07:55', estado: 'A tiempo' },
+          { id: newId(), nombre: 'Juan Pérez', '7-7020-1111': generateCedula(), rol: 'Estudiante', curso: 'DSVIII', aula: '3-105', tipo: 'Entrada', fecha: '2025-11-26', hora: '08:10', estado: 'Tarde' },
+          { id: newId(), nombre: 'Prof. Kexy Rodríguez', '8-2030-1111': generateCedula(), rol: 'Docente', aula: '3-105', tipo: 'Entrada', fecha: '2025-11-26', hora: '07:00', estado: 'A tiempo' }
+        ];
+        saveRegistrations(seed);
+      }
+      if (!localStorage.getItem('justs')) saveJustificantes([]);
+    }
+    seedDataIfEmpty();
+
+    // --- badges según estado ---
+    function stateBadge(status) {
+      if (status === 'A tiempo') return `<span class="badge-a">${status}</span>`;
+      if (status === 'Tarde') return `<span class="badge-t">${status}</span>`;
+      if (status === 'Ausente') return `<span class="badge-f">${status}</span>`;
+      if (status === 'Justificado') return `<span class="badge-j">${status}</span>`;
+      if (status === 'Cumplió horario') return `<span class="badge-ok">${status}</span>`;
+      return `<span>${status}</span>`;
+    }
+
+    // --- celda de acción (selector + botón subir justificante) ---
+    function actionCell(reg) {
+      const sel = `
+        <select data-id="${reg.id}" class="form-select form-select-sm sel-state" style="width:160px;display:inline-block">
+          <option ${reg.estado === 'A tiempo' ? 'selected' : ''}>A tiempo</option>
+          <option ${reg.estado === 'Tarde' ? 'selected' : ''}>Tarde</option>
+          <option ${reg.estado === 'Ausente' ? 'selected' : ''}>Ausente</option>
+          <option ${reg.estado === 'Justificado' ? 'selected' : ''}>Justificado</option>
+          <option ${reg.estado === 'Cumplió horario' ? 'selected' : ''}>Cumplió horario</option>
+        </select>`;
+      const btnJust = `
+        <button data-id="${reg.id}" class="btn btn-sm btn-primary btn-just small-btn ms-2"
+          ${!(reg.estado === 'Tarde' || reg.estado === 'Ausente' || reg.estado === 'Justificado') ? 'style="display:none"' : ''}>
+          Subir excusa
+        </button>`;
+      return `<div class="action-cell">${sel + btnJust}</div>`;
+    }
+
+    // --- renderizar tablas estudiantiles y docentes ---
+    function renderAllTables() {
+      const regs = getRegistrations();
+      const $tbEst = document.getElementById('tbEst');
+      const $tbDoc = document.getElementById('tbDoc');
+      $tbEst.innerHTML = '';
+      $tbDoc.innerHTML = '';
+
+      const filterEstText = document.getElementById('filterEst').value.toLowerCase();
+      const filterEstEstado = document.getElementById('filterEstEstado').value;
+      const filterDocText = document.getElementById('filterDoc').value.toLowerCase();
+      const filterDocEstado = document.getElementById('filterDocEstado').value;
+
+      regs.forEach(r => {
+        // estudiante
+        if (r.rol === 'Estudiante') {
+          if (filterEstText && !r.nombre.toLowerCase().includes(filterEstText) && !(r.cedula||'').toLowerCase().includes(filterEstText)) return;
+          if (filterEstEstado && r.estado !== filterEstEstado) return;
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${r.nombre}</td>
+            <td class="td-cedula text-center">${r.cedula || '-'}</td>
+            <td>${r.curso || '-'}</td>
+            <td>${r.aula || '-'}</td>
+            <td>${r.tipo}</td>
+            <td>${r.fecha}</td>
+            <td>${r.hora}</td>
+            <td class="state-cell">${stateBadge(r.estado)}</td>
+            <td>${actionCell(r)}</td>
+          `;
+          $tbEst.appendChild(tr);
+        } else { // docente
+          if (filterDocText && !r.nombre.toLowerCase().includes(filterDocText) && !(r.cedula||'').toLowerCase().includes(filterDocText)) return;
+          if (filterDocEstado && r.estado !== filterDocEstado) return;
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${r.nombre}</td>
+            <td class="td-cedula text-center">${r.cedula || '-'}</td>
+            <td>${r.aula || '-'}</td>
+            <td>${r.tipo}</td>
+            <td>${r.fecha}</td>
+            <td>${r.hora}</td>
+            <td class="state-cell">${stateBadge(r.estado)}</td>
+            <td>${actionCell(r)}</td>
+          `;
+          $tbDoc.appendChild(tr);
+        }
+      });
+
+      renderJustificantesTable();
+    }
+
+    // --- cambiar estado desde selector ---
+    document.addEventListener('change', function (ev) {
+      if (ev.target && ev.target.classList.contains('sel-state')) {
+        const id = ev.target.getAttribute('data-id');
+        const newState = ev.target.value;
+        const regs = getRegistrations();
+        const idx = regs.findIndex(x => x.id === id);
+        if (idx === -1) return;
+        regs[idx].estado = newState;
+        saveRegistrations(regs);
+        renderAllTables();
+        if (newState === 'Justificado') openJustModalFor(id);
+      }
+    });
+
+    // --- abrir modal justificante ---
+    document.addEventListener('click', function (ev) {
+      if (ev.target && ev.target.classList.contains('btn-just')) {
+        openJustModalFor(ev.target.getAttribute('data-id'));
+      }
+    });
+
+    function openJustModalFor(id) {
+      const reg = getRegistrations().find(x => x.id === id);
+      if (!reg) return;
+      document.getElementById('just_regId').value = id;
+      document.getElementById('just_nombre').value = reg.nombre;
+      document.getElementById('just_rol').value = reg.rol;
+      document.getElementById('just_fechaReg').value = reg.fecha;
+      document.getElementById('just_fechaDoc').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('just_ref').value = '';
+      document.getElementById('just_motivo').value = '';
+      document.getElementById('just_file').value = '';
+      new bootstrap.Modal(document.getElementById('modalJust')).show();
+    }
+
+    // --- guardar justificante (archivo opcional) ---
+    document.getElementById('formJust').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const regId = document.getElementById('just_regId').value;
+      const nombre = document.getElementById('just_nombre').value;
+      const rol = document.getElementById('just_rol').value;
+      const fechaReg = document.getElementById('just_fechaReg').value;
+      const fechaDoc = document.getElementById('just_fechaDoc').value;
+      const motivo = document.getElementById('just_motivo').value;
+      const ref = document.getElementById('just_ref').value;
+      const fileInput = document.getElementById('just_file');
+
+      // si no hay archivo, guardamos igual
+      if (!fileInput.files.length) {
+        saveJustificantes([{ id: newId(), regId, nombre, rol, fechaReg, fechaDoc, motivo, ref, fileName: null, fileData: null, created: new Date().toISOString() }, ...getJustificantes()]);
+        // actualizar estado registro a Justificado
+        const regs = getRegistrations();
+        const idx = regs.findIndex(x => x.id === regId);
+        if (idx !== -1) { regs[idx].estado = 'Justificado'; saveRegistrations(regs); }
+        bootstrap.Modal.getInstance(document.getElementById('modalJust')).hide();
+        renderAllTables();
+        return;
+      }
+
+      // si hay archivo lo leemos
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        saveJustificantes([{ id: newId(), regId, nombre, rol, fechaReg, fechaDoc, motivo, ref, fileName: file.name, fileData: evt.target.result, created: new Date().toISOString() }, ...getJustificantes()]);
+        const regs = getRegistrations();
+        const idx = regs.findIndex(x => x.id === regId);
+        if (idx !== -1) { regs[idx].estado = 'Justificado'; saveRegistrations(regs); }
+        bootstrap.Modal.getInstance(document.getElementById('modalJust')).hide();
+        renderAllTables();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // --- render justificantes ---
+    function renderJustificantesTable() {
+      const justs = getJustificantes();
+      const tbody = document.querySelector('#tbJust tbody');
+      tbody.innerHTML = '';
+      justs.forEach(j => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${j.nombre}</td>
+          <td>${j.rol}</td>
+          <td>${j.fechaReg}</td>
+          <td>${j.fechaDoc}</td>
+          <td>${j.motivo}</td>
+          <td>${j.fileName ? `<a href="${j.fileData}" download="${j.fileName}">${j.fileName}</a>` : '<i>Sin archivo</i>'}</td>
+          <td>
+            <button data-id="${j.id}" class="btn btn-sm btn-outline-primary view-just">Ver</button>
+            <button data-id="${j.id}" class="btn btn-sm btn-outline-danger del-just ms-1">Eliminar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ver/eliminar justificantes
+    document.addEventListener('click', function (ev) {
+      if (ev.target && ev.target.classList.contains('view-just')) {
+        const id = ev.target.getAttribute('data-id');
+        const j = getJustificantes().find(x => x.id === id);
+        if (!j) return;
+        document.getElementById('justDetailBody').innerHTML = `
+          <h5>${j.nombre} — ${j.rol}</h5>
+          <p><strong>Fecha registro:</strong> ${j.fechaReg}</p>
+          <p><strong>Fecha doc:</strong> ${j.fechaDoc}</p>
+          <p><strong>Motivo:</strong><br>${j.motivo}</p>
+          <p><strong>Archivo:</strong><br>${j.fileName ? `<a href="${j.fileData}" download="${j.fileName}">${j.fileName}</a>` : '<i>No adjuntado</i>'}</p>
+        `;
+        new bootstrap.Modal(document.getElementById('modalJustView')).show();
+      }
+
+      if (ev.target && ev.target.classList.contains('del-just')) {
+        const id = ev.target.getAttribute('data-id');
+        if (!confirm('¿Eliminar justificante?')) return;
+        saveJustificantes(getJustificantes().filter(x => x.id !== id));
+        renderJustificantesTable();
+      }
+    });
+
+    // --- simuladores (agregar registros de prueba) ---
+    function timeNow() { return new Date().toTimeString().slice(0, 5); }
+    function dayNow() { return new Date().toISOString().slice(0, 10); }
+
+    function addRegistration(reg) { saveRegistrations([reg, ...getRegistrations()]); renderAllTables(); }
+
+    document.getElementById('simEstLlegada').addEventListener('click', () => {
+      addRegistration({
+        id: newId(),
+        nombre: 'Estudiante ' + Math.floor(Math.random() * 900 + 100),
+        cedula: generateCedula(),
+        rol: 'Estudiante',
+        curso: 'DSVIII',
+        aula: '3-105',
+        tipo: 'Entrada',
+        fecha: dayNow(),
+        hora: timeNow(),
+        estado: 'A tiempo'
+      });
+    });
+
+    document.getElementById('simEstTarde').addEventListener('click', () => {
+      addRegistration({
+        id: newId(),
+        nombre: 'Estudiante ' + Math.floor(Math.random() * 900 + 100),
+        cedula: generateCedula(),
+        rol: 'Estudiante',
+        curso: 'DSVIII',
+        aula: '3-105',
+        tipo: 'Entrada',
+        fecha: dayNow(),
+        hora: '08:' + String(Math.floor(Math.random() * 30)).padStart(2, '0'),
+        estado: 'Tarde'
+      });
+    });
+
+    // salida estudiante: estado "Cumplió horario" (verde)
+    document.getElementById('simEstSalida').addEventListener('click', () => {
+      addRegistration({
+        id: newId(),
+        nombre: 'Estudiante ' + Math.floor(Math.random() * 900 + 100),
+        cedula: generateCedula(),
+        rol: 'Estudiante',
+        curso: 'DSVIII',
+        aula: '3-105',
+        tipo: 'Salida',
+        fecha: dayNow(),
+        hora: timeNow(),
+        estado: 'Cumplió horario'
+      });
+    });
+
+    document.getElementById('simDocLlegada').addEventListener('click', () => {
+      addRegistration({
+        id: newId(),
+        nombre: 'Prof. Demo',
+        cedula: generateCedula(),
+        rol: 'Docente',
+        aula: '3-105',
+        tipo: 'Entrada',
+        fecha: dayNow(),
+        hora: timeNow(),
+        estado: 'A tiempo'
+      });
+    });
+
+    document.getElementById('simDocTarde').addEventListener('click', () => {
+      addRegistration({
+        id: newId(),
+        nombre: 'Prof. Demo',
+        cedula: generateCedula(),
+        rol: 'Docente',
+        aula: '3-105',
+        tipo: 'Entrada',
+        fecha: dayNow(),
+        hora: '07:' + String(Math.floor(Math.random() * 60)).padStart(2, '0'),
+        estado: 'Tarde'
+      });
+    });
+
+    document.getElementById('simDocSalida').addEventListener('click', () => {
+      addRegistration({
+        id: newId(),
+        nombre: 'Prof. Demo',
+        cedula: generateCedula(),
+        rol: 'Docente',
+        aula: '3-105',
+        tipo: 'Salida',
+        fecha: dayNow(),
+        hora: timeNow(),
+        estado: 'Cumplió horario'
+      });
+    });
+
+    // --- export CSV (incluye cédula) ---
+    function exportCSV(filename, rows, keys) {
+      const csv = [keys.join(',')].concat(
+        rows.map(r => keys.map(k => `"${((r[k] || '') + '').toString().replace(/"/g, '""')}"`).join(','))
+      ).join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('exportAll').addEventListener('click', () => {
+      const rows = getRegistrations();
+      if (!rows.length) return alert('No hay registros para exportar');
+      exportCSV('asistencias_completo.csv', rows, ['nombre', 'cedula', 'rol', 'curso', 'aula', 'tipo', 'fecha', 'hora', 'estado']);
+    });
+
+    document.getElementById('exportEst').addEventListener('click', () => {
+      const rows = getRegistrations().filter(r => r.rol === 'Estudiante');
+      if (!rows.length) return alert('No hay registros de estudiantes');
+      exportCSV('asistencias_estudiantes.csv', rows, ['nombre', 'cedula', 'curso', 'aula', 'tipo', 'fecha', 'hora', 'estado']);
+    });
+
+    document.getElementById('exportDoc').addEventListener('click', () => {
+      const rows = getRegistrations().filter(r => r.rol === 'Docente');
+      if (!rows.length) return alert('No hay registros de docentes');
+      exportCSV('asistencias_docentes.csv', rows, ['nombre', 'cedula', 'aula', 'tipo', 'fecha', 'hora', 'estado']);
+    });
+
+    // filtros
+    document.getElementById('filterEst').addEventListener('input', renderAllTables);
+    document.getElementById('filterEstEstado').addEventListener('change', renderAllTables);
+    document.getElementById('filterDoc').addEventListener('input', renderAllTables);
+    document.getElementById('filterDocEstado').addEventListener('change', renderAllTables);
+
+    // ver/eliminar justificantes en tabla (delegación)
+    document.addEventListener('click', function (ev) {
+      if (ev.target && ev.target.classList.contains('view-just')) {
+        const id = ev.target.getAttribute('data-id');
+        const j = getJustificantes().find(x => x.id === id);
+        if (!j) return;
+        document.getElementById('justDetailBody').innerHTML = `
+          <h5>${j.nombre} — ${j.rol}</h5>
+          <p><strong>Fecha registro:</strong> ${j.fechaReg}</p>
+          <p><strong>Fecha doc:</strong> ${j.fechaDoc}</p>
+          <p><strong>Motivo:</strong><br>${j.motivo}</p>
+          <p><strong>Archivo:</strong><br>${j.fileName ? `<a href="${j.fileData}" download="${j.fileName}">${j.fileName}</a>` : '<i>No adjuntado</i>'}</p>
+        `;
+        new bootstrap.Modal(document.getElementById('modalJustView')).show();
+      }
+
+      if (ev.target && ev.target.classList.contains('del-just')) {
+        const id = ev.target.getAttribute('data-id');
+        if (!confirm('¿Eliminar justificante?')) return;
+        saveJustificantes(getJustificantes().filter(x => x.id !== id));
+        renderJustificantesTable();
+      }
+    });
+
+    // inicial
+    renderAllTables();
+  </script>
+</body>
+
+</html>
