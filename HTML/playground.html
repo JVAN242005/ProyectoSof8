@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Playground APIs</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body{ background:#f4f2f8; }
+    .card{ border-radius:16px; }
+    pre{ background:#111; color:#0f0; padding:12px; border-radius:10px; max-height:260px; overflow:auto; }
+    .grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; }
+    .btn{ margin:4px 0; }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3>Playground de APIs</h3>
+      <a href="dashboard.html" class="btn btn-secondary">Volver</a>
+    </div>
+
+    <div class="grid">
+      <div class="card p-3">
+        <h5>Asistencias</h5>
+        <button class="btn btn-primary btn-sm" id="btnListEst">Listar Estudiantes</button>
+        <button class="btn btn-primary btn-sm" id="btnListDoc">Listar Docentes</button>
+  <button class="btn btn-success btn-sm" id="btnCreateReg">Crear Registro (Estudiante)</button>
+  <button class="btn btn-success btn-sm" id="btnCreateRegDoc">Crear Registro (Docente)</button>
+        <button class="btn btn-warning btn-sm" id="btnCSVAll">CSV Todo</button>
+        <pre id="outAsis">(salida)</pre>
+      </div>
+
+      <div class="card p-3">
+        <h5>Justificantes</h5>
+        <button class="btn btn-primary btn-sm" id="btnListJust">Listar Justificantes</button>
+        <button class="btn btn-success btn-sm" id="btnCreateJust">Crear Justificante del primer registro</button>
+        <pre id="outJust">(salida)</pre>
+      </div>
+
+      <div class="card p-3">
+        <h5>Usuarios</h5>
+        <button class="btn btn-primary btn-sm" id="btnListUsers">Listar Usuarios</button>
+        <button class="btn btn-success btn-sm" id="btnCreateUser">Crear Usuario</button>
+        <button class="btn btn-danger btn-sm" id="btnDelUser">Eliminar último</button>
+        <pre id="outUsers">(salida)</pre>
+      </div>
+
+      <div class="card p-3">
+        <h5>Aulas</h5>
+        <button class="btn btn-primary btn-sm" id="btnListAulas">Listar Aulas</button>
+        <button class="btn btn-success btn-sm" id="btnCreateAula">Crear Aula</button>
+        <button class="btn btn-danger btn-sm" id="btnDelAula">Eliminar última</button>
+        <pre id="outAulas">(salida)</pre>
+      </div>
+
+      <div class="card p-3">
+        <h5>Auth / Dashboard</h5>
+  <button class="btn btn-primary btn-sm" id="btnLogin">Login</button>
+        <button class="btn btn-secondary btn-sm" id="btnGetSession">Ver sesión</button>
+        <button class="btn btn-warning btn-sm" id="btnLogout">Logout</button>
+        <button class="btn btn-info btn-sm" id="btnResumen">Resumen del día</button>
+        <pre id="outMisc">(salida)</pre>
+      </div>
+
+      <div class="card p-3">
+  <h5>Reset datos</h5>
+        <p class="text-muted">Borra colecciones en LocalStorage (regs, justs, users, aulas, session).</p>
+        <button class="btn btn-outline-danger btn-sm" id="btnReset">Reset</button>
+        <pre id="outReset">(salida)</pre>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/simdb.js"></script>
+  <script src="js/asistencias.api.js"></script>
+  <script src="js/usuarios.api.js"></script>
+  <script src="js/aulas.api.js"></script>
+  <script src="js/auth.api.js"></script>
+  <script src="js/dashboard.api.js"></script>
+  <script>
+    function show(el, data){ el.textContent = typeof data==='string' ? data : JSON.stringify(data, null, 2); }
+
+    // Asistencias
+    document.getElementById('btnListEst').addEventListener('click', async()=>{
+      const res = await AsistenciasAPI.listRegistros({ rol:'Estudiante' });
+      show(document.getElementById('outAsis'), res);
+    });
+    document.getElementById('btnListDoc').addEventListener('click', async()=>{
+      const res = await AsistenciasAPI.listRegistros({ rol:'Docente' });
+      show(document.getElementById('outAsis'), res);
+    });
+    document.getElementById('btnCreateReg').addEventListener('click', async()=>{
+      const r = await AsistenciasAPI.createRegistro({
+        nombre: 'Estudiante Playground',
+        cedula: SimAPI.cedula(),
+        rol: 'Estudiante', curso:'DSVIII', aula:'3-105', tipo:'Entrada', estado:'A tiempo'
+      });
+      show(document.getElementById('outAsis'), r);
+    });
+    document.getElementById('btnCreateRegDoc').addEventListener('click', async()=>{
+      const r = await AsistenciasAPI.createRegistro({
+        nombre: 'Prof. Playground',
+        cedula: SimAPI.cedula(),
+        rol: 'Docente', aula:'3-105', tipo:'Entrada', estado:'A tiempo'
+      });
+      show(document.getElementById('outAsis'), r);
+    });
+    document.getElementById('btnCSVAll').addEventListener('click', ()=>{
+      const csv = AsistenciasAPI.makeCSVAll();
+      show(document.getElementById('outAsis'), csv);
+    });
+
+    // Justificantes
+    document.getElementById('btnListJust').addEventListener('click', async()=>{
+      const res = await AsistenciasAPI.listJustificantes();
+      show(document.getElementById('outJust'), res);
+    });
+    document.getElementById('btnCreateJust').addEventListener('click', async()=>{
+      const regs = await AsistenciasAPI.listRegistros();
+      if(!regs.length) return show(document.getElementById('outJust'), {error:'No hay registros'});
+      const j = await AsistenciasAPI.createJustificante({
+        regId: regs[0].id, nombre: regs[0].nombre, rol: regs[0].rol,
+        fechaReg: regs[0].fecha, fechaDoc: new Date().toISOString().slice(0,10), motivo:'Prueba playground', ref:'PG-001'
+      });
+      show(document.getElementById('outJust'), j);
+    });
+
+    // Usuarios
+    document.getElementById('btnListUsers').addEventListener('click', async()=>{
+      const res = await UsuariosAPI.listar();
+      show(document.getElementById('outUsers'), res);
+    });
+    document.getElementById('btnCreateUser').addEventListener('click', async()=>{
+      const u = await UsuariosAPI.crear({ nombre:'User Playground', cedula:'5-1234-5678', rol:'Estudiante', grupo:'1GS999', correo:'pg@utp' });
+      show(document.getElementById('outUsers'), u);
+    });
+    document.getElementById('btnDelUser').addEventListener('click', async()=>{
+      const list = await UsuariosAPI.listar();
+      if(!list.length) return show(document.getElementById('outUsers'), {error:'Vacío'});
+      const last = list[list.length-1];
+      await UsuariosAPI.eliminar(last.id);
+      show(document.getElementById('outUsers'), {deleted:last});
+    });
+
+    // Aulas
+    document.getElementById('btnListAulas').addEventListener('click', async()=>{
+      const res = await AulasAPI.listar();
+      show(document.getElementById('outAulas'), res);
+    });
+    document.getElementById('btnCreateAula').addEventListener('click', async()=>{
+      const a = await AulasAPI.crear({ aula:'3-301', device:'ESP-301-C', estado:'Activo' });
+      show(document.getElementById('outAulas'), a);
+    });
+    document.getElementById('btnDelAula').addEventListener('click', async()=>{
+      const list = await AulasAPI.listar();
+      if(!list.length) return show(document.getElementById('outAulas'), {error:'Vacío'});
+      const last = list[list.length-1];
+      await AulasAPI.eliminar(last.id);
+      show(document.getElementById('outAulas'), {deleted:last});
+    });
+
+    // Auth / Dashboard
+    document.getElementById('btnLogin').addEventListener('click', async()=>{
+      const s = await AuthAPI.login('admin@utp','1234');
+      show(document.getElementById('outMisc'), s);
+    });
+    document.getElementById('btnGetSession').addEventListener('click', ()=>{
+      const s = AuthAPI.getSession();
+      show(document.getElementById('outMisc'), s||{info:'Sin sesión'});
+    });
+    document.getElementById('btnLogout').addEventListener('click', async()=>{
+      await AuthAPI.logout();
+      show(document.getElementById('outMisc'), {ok:true});
+    });
+    document.getElementById('btnResumen').addEventListener('click', async()=>{
+      const r = await DashboardAPI.resumenDelDia();
+      show(document.getElementById('outMisc'), r);
+    });
+
+    // Reset
+    document.getElementById('btnReset').addEventListener('click', ()=>{
+      localStorage.removeItem('regs');
+      localStorage.removeItem('justs');
+      localStorage.removeItem('users');
+      localStorage.removeItem('aulas');
+      localStorage.removeItem('session');
+      show(document.getElementById('outReset'), {ok:true, cleared:['regs','justs','users','aulas','session']});
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+/* AULAS – estilos alineados al diseño de usuarios */
+body { font-family: 'Poppins', sans-serif; background:#f4f2f8; color:#222; }
+
+/* Header y navegación */
+header { background: linear-gradient(90deg, #4B0082, #800080); padding:20px 30px; box-shadow:0 6px 20px rgba(0,0,0,0.15); }
+header h4 { color:#fff; font-weight:700; font-size:1.8rem; margin:0; }
+.btn-back { background:#fff; color:#4B0082; font-weight:600; border-radius:12px; padding:8px 20px; box-shadow:0 4px 10px rgba(0,0,0,0.2); transition: transform .2s, background-color .3s, color .3s; text-decoration:none !important; }
+.btn-back:hover { transform: translateY(-4px); background-color:#9370DB; color:#fff; }
+
+/* Encabezados de sección */
+.section-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+.title-line { width:6px; height:28px; border-radius:6px; background:#4B0082; }
+.section-title { font-size:1.6rem; font-weight:700; color:#4B0082; margin:0; }
+
+/* Contenedores */
+.content-box { background:#fff; border-radius:16px; padding:20px; box-shadow:0 8px 25px rgba(0,0,0,0.1); width:100%; }
+.scroll-area { overflow:auto; max-height:430px; }
+
+/* Tablas */
+table { border-collapse:separate !important; border-spacing:0 8px !important; width:100%; }
+thead th { background:#4B0082; color:#fff; padding:12px 10px; border:0; text-align:center; font-weight:600; }
+tbody tr { background:#fff; border-radius:8px; }
+tbody td { background:#fff; padding:10px 8px; vertical-align:middle; border-top:1px solid #e9ecef; border-bottom:1px solid #e9ecef; text-align:center; }
+
+/* Badges de estado de dispositivos */
+.badge-activo { background:#198754; color:white; padding:6px 12px; border-radius:12px; font-size:14px; font-weight:600; }
+.badge-off { background:#dc3545; color:white; padding:6px 12px; border-radius:12px; font-size:14px; font-weight:600; }
+
+/* Filtros */
+.filters-area { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.filters-area select, .filters-area input { border-radius:12px; border:1px solid #ccc; padding:8px 12px; box-shadow:0 2px 6px rgba(0,0,0,0.06) inset; }
+.filters-area select:focus, .filters-area input:focus { outline:none; border-color:#4B0082; box-shadow:0 2px 8px rgba(75,0,130,0.25) inset; }
+
+/* Botón primario reutilizable */
+.btn-main { background:#4B0082; color:#fff; font-weight:600; border-radius:12px; padding:8px 20px; transition: transform .2s, background-color .3s; }
+.btn-main:hover { transform: translateY(-2px); background-color:#9370DB; }
+
+a { text-decoration:none !important; }

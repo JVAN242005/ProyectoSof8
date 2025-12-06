@@ -1,0 +1,40 @@
+/* Login — alineado al diseño AULAS/Asistencias (paleta morado, sombras suaves, Poppins) */
+/* Fondo sencillo y limpio */
+/* Fondo mejorado: degradado suave con textura sutil */
+body{background:linear-gradient(135deg,#f4f2f8 0%, #efeaf7 40%, #e7e0f4 100%);
+	height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;color:#222;
+	position:relative;}
+/* Motas sutiles (no invasivas) */
+body::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 20% 30%, rgba(147,112,219,.12) 0, rgba(147,112,219,0) 55%),
+	radial-gradient(circle at 80% 70%, rgba(75,0,130,.10) 0, rgba(75,0,130,0) 50%);
+	pointer-events:none;}
+
+.utp-logo{display:block;width:140px;max-width:60vw;margin:16px auto 8px auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.12));}
+
+.card{border-radius:18px;max-width:460px;width:100%;box-shadow:0 14px 28px rgba(75,0,130,0.15);border:0;background:#ffffff;padding:26px 24px;backdrop-filter:saturate(1.1);} 
+.card .brand{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:8px;}
+.brand-text{font-weight:600;color:#4B0082;letter-spacing:.2px;}
+.utp-logo{display:block;max-width:180px;max-height:56px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.12));}
+.card h4{font-weight:700;color:#4B0082;margin-bottom:8px;}
+.card .subtitle{color:#6c757d;font-size:.95rem;margin-bottom:16px;}
+
+/* Inputs */
+.form-control{border-radius:12px;border:1px solid #d4cfe0;box-shadow:0 2px 6px rgba(0,0,0,0.06) inset;padding:11px 12px;background:#fcfbff;}
+.form-control:focus{outline:none;border-color:#4B0082;box-shadow:0 2px 8px rgba(75,0,130,0.25) inset;}
+
+/* Botones principales */
+.btn-main{background:#4B0082;color:#fff;border:0;border-radius:12px;padding:11px 16px;font-weight:600;transition:transform .2s,background-color .25s, box-shadow .25s;box-shadow:0 8px 18px rgba(75,0,130,.22);} 
+.btn-main:hover{background:#7f5ad6;transform:translateY(-1px);box-shadow:0 10px 22px rgba(75,0,130,.28);} 
+
+/* Toggle contraseña */
+.input-group .btn{border-radius:12px;border-color:#d4cfe0;color:#555;background:#faf9ff}
+.input-group .btn:hover{background:#f1f0f6;color:#222;border-color:#bbb}
+
+/* Link y texto auxiliar */
+.helper{margin-top:12px;text-align:center;color:#6c757d;font-size:.9rem;}
+.helper a{text-decoration:none;color:#4B0082;font-weight:600;}
+.helper a:hover{color:#9370DB;}
+
+/* Header (opcional) */
+header{background:linear-gradient(90deg,#4B0082,#800080);padding:18px 24px;box-shadow:0 6px 20px rgba(0,0,0,0.15);} 
+header h4{color:#fff;font-weight:700;margin:0;}

@@ -1,0 +1,104 @@
+body {
+  background: #f4f2f8;
+  font-family: 'Poppins', sans-serif;
+}
+/* ================= HEADER RECTANGULAR ================= */
+header {
+  background: linear-gradient(90deg, #4B0082, #800080);
+  padding: 25px 30px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+header h1 {
+  color:#fff;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 2rem;
+  letter-spacing: 1px;
+  margin:0;
+}
+/* Botón Cerrar sesión con efecto hover */
+.btn-salir {
+  display: inline-block;
+  padding: 10px 22px;
+  border-radius: 12px;
+  background: #fff;
+  color: #4B0082;
+  font-weight: 600;
+  text-decoration: none !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: transform 0.2s, background-color 0.3s, color 0.3s;
+}
+.btn-salir:hover {
+  transform: translateY(-4px);
+  background-color: #9370DB;
+  color: #fff;
+}
+/* ================= TARJETAS DE MENÚ ================= */
+.row.g-4 {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+.card-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  transition: all 0.4s ease;
+  cursor: pointer;
+  background: linear-gradient(135deg, #9370DB, #4B0082);
+  color: #fff;
+  text-align: center;
+  padding: 36px 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  text-decoration: none;
+}
+.card-menu:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+}
+.card-menu h5 {
+  font-weight: 700;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+}
+.card-menu p {
+  color: #e0d7f5;
+  font-weight: 500;
+}
+.card-menu i {
+  font-size: 3rem;
+  margin-bottom: 15px;
+  color: #fff; /* iconos blancos para mayor contraste en gradiente */
+}
+/* ================= RESUMEN ================= */
+.resumen-container {
+  margin-top: 40px;
+}
+.resumen-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 25px 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  text-align: center;
+}
+.resumen-box h5 {
+  font-weight: 700;
+  color: #4B0082;
+  margin-bottom: 25px;
+  font-size: 1.6rem;
+}
+.resumen-item strong {
+  font-size: 2.5rem;
+  display: block;
+  color: #4B0082;
+  margin-bottom: 5px;
+}
+.resumen-item .text-muted {
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+a {
+  text-decoration: none !important; /* quitar subrayado globalmente */
+}
