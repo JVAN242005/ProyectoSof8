@@ -1,4 +1,4 @@
-# ProyectoSof8 — Backend simulado (demo)
+# ProyectoSof8 — Backend simulado 
 
 Este proyecto es una demo de frontend (HTML/CSS/JS) que usa **LocalStorage** como backend simulado.
 Se añadieron módulos JavaScript en `HTML/js/` que actúan como APIs para cada página.
