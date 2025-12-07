@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Login - Sistema de Asistencia IoT</title>
+  <!-- Carga los estilos del login -->
+  <link rel="stylesheet" href="css/login.css" />
+</head>
+<body>
+  <div class="login-container">
+    <h4>Sistema de Asistencia IoT</h4>
+    <!-- Formulario de login -->
+    <form id="login-form">
+      <div class="form-group">
+        <label for="user">Correo</label>
+        <!-- Input para el correo -->
+        <input id="user" type="text" class="input-box" placeholder="Correo" />
+      </div>
+      <div class="form-group">
+        <label for="pass">Contraseña</label>
+        <!-- Input para la contraseña -->
+        <input id="pass" type="password" class="input-box" placeholder="Contraseña" />
+      </div>
+      <!-- Botón para enviar el formulario -->
+      <button id="loginBtn" type="submit" class="btn-login">Entrar</button>
+    </form>
+  </div>
+  <script type="module">
+    // Importa la función login desde el archivo JS
+    import { login } from './js/auth.api.js';
+
+    // Evento submit del formulario de login
+    document.getElementById('login-form').addEventListener('submit', async function(e){
+      e.preventDefault(); // Evita recargar la página
+      // Obtiene los valores de los inputs
+      const correo = document.getElementById('user').value.trim();
+      const password = document.getElementById('pass').value;
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true; // Desactiva el botón mientras procesa
+
+      try {
+        // Llama a la función login y espera la respuesta del backend
+        const data = await login(correo, password);
+        // Guarda el usuario en sessionStorage para usar en otras páginas
+        sessionStorage.setItem('user', JSON.stringify(data.user));
+        // Redirige al dashboard si el login fue exitoso
+        window.location.href = 'dashboard.html';
+      } catch (err){
+        // Muestra mensaje de error si falla el login
+        alert(err.message || 'Error de autenticación');
+      } finally {
+        btn.disabled = false; // Reactiva el botón
+      }
+    });
+  </script>
+</body>
+</html>
+
