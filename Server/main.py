@@ -71,6 +71,8 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
   user: dict  # devolvemos solo los datos básicos del usuario
 
+
+#----------------PARTE DEL LOGIN------------------
 @app.post("/api/login", response_model=LoginResponse)
 def login(body: LoginRequest, db: Session = Depends(get_db)):
   # Buscar usuario por correo
@@ -87,3 +89,90 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
     "correo": user.correo,
     "rol": user.rol
   }}
+  
+  
+  
+  
+#----------------- LISTAR USUARIOS ------------------
+@app.get("/api/usuarios")
+def listar_usuarios(db: Session = Depends(get_db)):
+    usuarios = db.query(models.Usuario).all()
+    # Serializa cada usuario a dict
+    usuarios_dict = [
+        {
+            "id": u.id,
+            "nombre": u.nombre,
+            "cedula": u.cedula,
+            "rol": u.rol,
+            "grupo": u.grupo,
+            "correo": u.correo
+        }
+        for u in usuarios
+    ]
+    return {"usuarios": usuarios_dict}
+
+#----------------- CREAR USUARIO ------------------
+class UsuarioCreate(BaseModel):
+    nombre: str
+    cedula: str
+    rol: str
+    grupo: str = None
+    correo: str
+    password: str = None
+
+@app.post("/api/usuarios")
+def crear_usuario(user: UsuarioCreate, db: Session = Depends(get_db)):
+    # Verifica si la cédula o correo ya existen
+    if db.query(models.Usuario).filter(models.Usuario.cedula == user.cedula).first():
+        raise HTTPException(status_code=400, detail="Cédula ya registrada")
+    if db.query(models.Usuario).filter(models.Usuario.correo == user.correo).first():
+        raise HTTPException(status_code=400, detail="Correo ya registrado")
+    nuevo = models.Usuario(**user.dict())
+    db.add(nuevo)
+    db.commit()
+    db.refresh(nuevo)
+    return {"user": {
+        "id": nuevo.id,
+        "nombre": nuevo.nombre,
+        "cedula": nuevo.cedula,
+        "rol": nuevo.rol,
+        "grupo": nuevo.grupo,
+        "correo": nuevo.correo
+    }}
+
+#----------------- ACTUALIZAR USUARIO ------------------
+class UsuarioUpdate(BaseModel):
+    nombre: str = None
+    cedula: str = None
+    rol: str = None
+    grupo: str = None
+    correo: str = None
+    password: str = None
+
+@app.put("/api/usuarios/{id}")
+def actualizar_usuario(id: int, user: UsuarioUpdate, db: Session = Depends(get_db)):
+    u = db.query(models.Usuario).filter(models.Usuario.id == id).first()
+    if not u:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    for key, value in user.dict(exclude_unset=True).items():
+        setattr(u, key, value)
+    db.commit()
+    db.refresh(u)
+    return {"user": {
+        "id": u.id,
+        "nombre": u.nombre,
+        "cedula": u.cedula,
+        "rol": u.rol,
+        "grupo": u.grupo,
+        "correo": u.correo
+    }}
+
+#----------------- ELIMINAR USUARIO ------------------
+@app.delete("/api/usuarios/{id}")
+def eliminar_usuario(id: int, db: Session = Depends(get_db)):
+    u = db.query(models.Usuario).filter(models.Usuario.id == id).first()
+    if not u:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    db.delete(u)
+    db.commit()
+    return {"success": True, "id": id}
