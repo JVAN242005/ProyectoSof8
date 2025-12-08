@@ -6,11 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Gestión de Usuarios - Sistema IoT</title>
 
-  <!-- Bootstrap -->
+  <!-- Bootstrap y estilos -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="css/usuarios.css" />
   <style>
     /* estilos específicos o temporales pueden quedar aquí si no están en usuarios.css */
@@ -19,6 +18,7 @@
 
 <body>
 
+<!-- Encabezado con botón para volver al dashboard -->
 <header>
   <div class="container d-flex justify-content-between align-items-center">
     <h4>Gestión de Usuarios</h4>
@@ -28,17 +28,19 @@
 
 <div class="container mt-4">
 
-  <!-- Sección título -->
+  <!-- Título de sección -->
   <div class="section-header">
     <div class="title-line"></div>
     <h5 class="section-title">Administrar Usuarios</h5>
   </div>
 
+  <!-- Barra de búsqueda y botón para agregar usuario -->
   <div class="d-flex mb-3 justify-content-between flex-wrap">
     <input id="searchUser" class="form-control" style="max-width:280px" placeholder="Buscar por nombre o cédula...">
     <button class="btn btn-main" id="btnAddUser">+ Agregar Usuario</button>
   </div>
 
+  <!-- Tabla de usuarios -->
   <div class="content-box">
     <div class="scroll-area">
       <table class="table table-sm">
@@ -58,7 +60,7 @@
   </div>
 </div>
 
-<!-- MODAL -->
+<!-- Modal para agregar/editar usuario -->
 <div class="modal fade" id="modalUser" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -102,31 +104,30 @@
   </div>
 </div>
 
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Simulated backend -->
-<script src="js/simdb.js"></script>
+
+<!-- API de usuarios (conexión al backend) -->
 <script src="js/usuarios.api.js"></script>
-
 <script>
-/* ----------------------------- LOCAL STORAGE ------------------------------*/
-function getUsers(){ return JSON.parse(localStorage.getItem("users") || "[]"); }
-function saveUsers(arr){ localStorage.setItem("users", JSON.stringify(arr)); }
-
-if(!localStorage.getItem("users")){
-  saveUsers([
-    {id:"u1", nombre:"Jeremy Valdés", cedula:"8-1234-5678", rol:"Estudiante", grupo:"1GS123", correo:"jeremy@utp"},
-  {id:"u2", nombre:"Prof. Ejemplo", cedula:"4-9876-3456", rol:"Docente", grupo:"", correo:"ejemplo@utp"}
-  ]);
-}
-
-/* ----------------------------- RENDER ------------------------------*/
-function renderUsers(){
+// Función para renderizar la tabla de usuarios
+async function renderUsers(){
   const tbody = document.getElementById("tbUsers");
   const search = document.getElementById("searchUser").value.toLowerCase();
 
   tbody.innerHTML = "";
 
-  getUsers().forEach(u=>{
+  let users = [];
+  try {
+    // Llama al backend para obtener usuarios (puede filtrar por búsqueda)
+    users = await UsuariosAPI.listar({ search });
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6">Error al cargar usuarios</td></tr>`;
+    return;
+  }
+
+  // Recorre y muestra cada usuario en la tabla
+  users.forEach(u=>{
     if(search &&
       !u.nombre.toLowerCase().includes(search) &&
       !u.cedula.toLowerCase().includes(search)
@@ -148,19 +149,21 @@ function renderUsers(){
   });
 }
 
-renderUsers();
-
 /* ----------------------------- MODAL ------------------------------*/
+// Inicializa el modal de usuario
 const modalUser = new bootstrap.Modal(document.getElementById("modalUser"));
 
+// Botón para abrir el modal y limpiar el formulario
 document.getElementById("btnAddUser").addEventListener("click", ()=>{
   document.getElementById("formUser").reset();
   document.getElementById("userId").value = "";
   modalUser.show();
 });
 
-function editUser(id){
-  const u = getUsers().find(x=>x.id === id);
+// Función para editar usuario (llena el modal con los datos)
+window.editUser = async function(id){
+  const users = await UsuariosAPI.listar();
+  const u = users.find(x=>x.id === id);
   document.getElementById("userId").value = u.id;
   document.getElementById("userName").value = u.nombre;
   document.getElementById("userCedula").value = u.cedula;
@@ -170,44 +173,48 @@ function editUser(id){
   modalUser.show();
 }
 
-function delUser(id){
+// Función para eliminar usuario
+window.delUser = async function(id){
   if(!confirm("¿Eliminar usuario?")) return;
-  saveUsers(getUsers().filter(x=>x.id !== id));
+  await UsuariosAPI.eliminar(id);
   renderUsers();
 }
 
 /* ----------------------------- GUARDAR USUARIO ------------------------------*/
-document.getElementById("saveUser").addEventListener("click", ()=>{
+// Botón para guardar usuario (nuevo o editado)
+document.getElementById("saveUser").addEventListener("click", async ()=>{
   const id = document.getElementById("userId").value;
-
   const nombre = document.getElementById("userName").value;
   const cedula = document.getElementById("userCedula").value;
   const rol = document.getElementById("userRol").value;
   const grupo = document.getElementById("userGrupo").value;
   const correo = document.getElementById("userCorreo").value;
 
-  const cedulaRegex = /^[1-9]-\d{4}-\d{4}$/;
-
-  if(!cedulaRegex.test(cedula)){
+  // Valida la cédula antes de guardar
+  if(!UsuariosAPI.validarCedula(cedula)){
     alert("Cédula inválida. Formato correcto: X-XXXX-XXXX");
     return;
   }
 
-  let users = getUsers();
-
-  if(id){
-    const i = users.findIndex(x=>x.id === id);
-    users[i] = {id, nombre, cedula, rol, grupo, correo};
-  } else {
-    users.push({ id: "u" + Date.now(), nombre, cedula, rol, grupo, correo });
+  try {
+    // Si hay id, actualiza; si no, crea nuevo usuario
+    if(id){
+      await UsuariosAPI.actualizar(id, { nombre, cedula, rol, grupo, correo });
+    } else {
+      await UsuariosAPI.crear({ nombre, cedula, rol, grupo, correo });
+    }
+    modalUser.hide();
+    renderUsers();
+  } catch(e) {
+    alert(e.message || "Error al guardar usuario");
   }
-
-  saveUsers(users);
-  modalUser.hide();
-  renderUsers();
 });
 
+// Evento para buscar usuarios mientras se escribe
 document.getElementById("searchUser").addEventListener("input", renderUsers);
+
+// Llama a renderUsers al cargar la página para mostrar la lista inicial
+renderUsers();
 </script>
 
 </body>

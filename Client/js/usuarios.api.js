@@ -18,12 +18,43 @@
 (function(){
   const db = window.SimDB, api = window.SimAPI;
   const cedulaRegex = /^[1-9]-\d{4}-\d{4}$/;
+  const API_URL = 'http://localhost:8000/api/usuarios';
 
   window.UsuariosAPI = {
     validarCedula(c){ return cedulaRegex.test(c); },
-    async listar({search}={}){ await api.delay(); let users = db.getUsers(); if(search){ const s=search.toLowerCase(); users = users.filter(u=>u.nombre.toLowerCase().includes(s)||u.cedula.toLowerCase().includes(s)); } return users; },
-    async crear(u){ await api.delay(); const nu = Object.assign({id: api.id('u')}, u); const all=[...db.getUsers(), nu]; db.setUsers(all); return nu; },
-    async actualizar(id, u){ await api.delay(); const users=db.getUsers(); const i=users.findIndex(x=>x.id===id); if(i===-1) throw new Error('Usuario no encontrado'); users[i]=Object.assign({id}, u); db.setUsers(users); return users[i]; },
-    async eliminar(id){ await api.delay(); db.setUsers(db.getUsers().filter(x=>x.id!==id)); return {ok:true}; }
+    async listar({search}={}){ 
+      let url = API_URL;
+      if (search) url += `?search=${encodeURIComponent(search)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Error al obtener usuarios');
+      // Si tu backend responde {usuarios: [...]}, usa .usuarios; si no, usa el array directo
+      const data = await res.json();
+      return data.usuarios || data;
+    },
+    async crear(u){ 
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(u)
+      });
+      if (!res.ok) throw new Error('Error al crear usuario');
+      return await res.json();
+    },
+    async actualizar(id, u){ 
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(u)
+      });
+      if (!res.ok) throw new Error('Error al actualizar usuario');
+      return await res.json();
+    },
+    async eliminar(id){ 
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Error al eliminar usuario');
+      return await res.json();
+    }
   };
 })();
