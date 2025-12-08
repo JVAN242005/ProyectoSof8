@@ -35,6 +35,7 @@
 
       <div class="ms-auto">
         <button id="exportAll" class="btn btn-secondary btn-sm export-btn">Exportar todo (CSV)</button>
+        <button id="clearAll" class="btn btn-danger btn-sm">Limpiar registros</button>
       </div>
     </div>
 
@@ -640,6 +641,14 @@
         if (!confirm('¿Eliminar justificante?')) return;
         saveJustificantes(getJustificantes().filter(x => x.id !== id));
         renderJustificantesTable();
+      }
+    });
+
+    document.getElementById('clearAll').addEventListener('click', () => {
+      if (confirm('¿Estás seguro de que deseas eliminar todos los registros?')) {
+        localStorage.removeItem('regs');
+        renderAllTables();
+        alert('Todos los registros han sido eliminados.');
       }
     });
 
