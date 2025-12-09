@@ -8,12 +8,10 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="css/asistencias.css" />
 </head>
 
 <body>
-
   <header>
     <div class="container d-flex justify-content-between align-items-center">
   <h4 class="m-0">Sistema de Asistencias</h4>
@@ -22,17 +20,14 @@
   </header>
 
   <div class="container mt-4">
-
     <!-- controles superiores -->
     <div class="d-flex gap-2 mb-4 flex-wrap align-items-center">
-      <button id="simEstLlegada" class="btn btn-outline-primary btn-sm small-btn">Llegada estudiante</button>
-      <button id="simEstTarde" class="btn btn-outline-warning btn-sm small-btn">Tarde estudiante</button>
-      <button id="simEstSalida" class="btn btn-outline-success btn-sm small-btn">Salida estudiante</button>
+      <div>
+        <label for="filterDate" class="form-label me-2">Filtrar por fecha:</label>
+        <input type="date" id="filterDate" class="form-control form-control-sm" style="width:170px">
+      </div>
 
-      <button id="simDocLlegada" class="btn btn-outline-success btn-sm small-btn ms-3">Llegada docente</button>
-      <button id="simDocTarde" class="btn btn-outline-danger btn-sm small-btn">Tarde docente</button>
-      <button id="simDocSalida" class="btn btn-outline-secondary btn-sm small-btn">Salida docente</button>
-
+      <!--BOTONES IMPORTANTES-->
       <div class="ms-auto">
         <button id="exportAll" class="btn btn-secondary btn-sm export-btn">Exportar todo (CSV)</button>
         <button id="clearAll" class="btn btn-danger btn-sm">Limpiar registros</button>
@@ -40,64 +35,59 @@
     </div>
 
     <div class="row g-4">
-
       <!-- ESTUDIANTES -->
-<div class="col-md-6">
-  <div class="content-box">
+      <div class="col-md-6">
+        <div class="content-box">
+          <div class="section-header mb-3">
+            <div class="title-line"></div>
+            <h5 class="section-title">
+              <span style="font-size:20px; margin-right:6px;">🎓</span> Estudiantes
+            </h5>
+          </div>
 
-    <div class="section-header mb-3">
-      <div class="title-line"></div>
-      <h5 class="section-title">
-        <span style="font-size:20px; margin-right:6px;">🎓</span> Estudiantes
-      </h5>
-    </div>
+          <div class="filters-area">
+            <input id="filterEst" class="form-control form-control-sm" style="width:170px" placeholder="Buscar...">
+            <select id="filterEstEstado" class="form-select form-select-sm" style="width:150px">
+              <option value="">Todos</option>
+              <option value="A tiempo">A tiempo</option>
+              <option value="Tarde">Tarde</option>
+              <option value="Ausente">Ausente</option>
+              <option value="Justificado">Justificado</option>
+              <option value="Cumplió horario">Cumplió horario</option>
+            </select>
+            <button id="exportEst" class="btn btn-outline-dark btn-sm export-btn">Exportar estudiantes</button>
+          </div>
 
-    <div class="filters-area">
-      <input id="filterEst" class="form-control form-control-sm" style="width:170px" placeholder="Buscar...">
-      <select id="filterEstEstado" class="form-select form-select-sm" style="width:150px">
-        <option value="">Todos</option>
-        <option value="A tiempo">A tiempo</option>
-        <option value="Tarde">Tarde</option>
-        <option value="Ausente">Ausente</option>
-        <option value="Justificado">Justificado</option>
-        <option value="Cumplió horario">Cumplió horario</option>
-      </select>
-      <button id="exportEst" class="btn btn-outline-dark btn-sm export-btn">Exportar estudiantes</button>
-    </div>
-
-    <div style="overflow:auto" class="mt-3">
-      <table class="table table-bordered mb-0">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th class="text-center">Cédula</th>
-            <th>Curso</th>
-            <th>Aula</th>
-            <th>Tipo</th>
-            <th>Fecha</th>
-            <th>Hora</th>
-            <th>Estado</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-        <tbody id="tbEst"></tbody>
-      </table>
-    </div>
-
-  </div>
-</div>
-
+          <div style="overflow:auto" class="mt-3">
+            <table class="table table-bordered mb-0">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th class="text-center">Cédula</th>
+                  <th>Curso</th>
+                  <th>Aula</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th>Hora</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tbEst"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
       <!-- DOCENTES -->
-<div class="col-md-6">
-  <div class="content-box">
-
-    <div class="section-header mb-3">
-      <div class="title-line"></div>
-      <h5 class="section-title">
-        <span style="font-size:20px; margin-right:6px;">📘</span> Docentes
-      </h5>
-    </div>
+      <div class="col-md-6">
+        <div class="content-box">
+          <div class="section-header mb-3">
+            <div class="title-line"></div>
+            <h5 class="section-title">
+              <span style="font-size:20px; margin-right:6px;">📘</span> Docentes
+            </h5>
+          </div>
 
     <div class="filters-area">
       <input id="filterDoc" class="form-control form-control-sm" style="width:170px" placeholder="Buscar...">
@@ -112,60 +102,53 @@
       <button id="exportDoc" class="btn btn-outline-dark btn-sm export-btn">Exportar docentes</button>
     </div>
 
-    <div style="overflow:auto" class="mt-3">
-      <table class="table table-bordered mb-0">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th class="text-center">Cédula</th>
-            <th>Aula</th>
-            <th>Tipo</th>
-            <th>Fecha</th>
-            <th>Hora</th>
-            <th>Estado</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-        <tbody id="tbDoc"></tbody>
-      </table>
-    </div>
-
-  </div>
-</div>
-
-
+          <div style="overflow:auto" class="mt-3">
+            <table class="table table-bordered mb-0">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th class="text-center">Cédula</th>
+                  <th>Aula</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th>Hora</th>
+                  <th>Estado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tbDoc"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Justificantes -->
-<div class="mt-4 content-box">
-  
-  <div class="section-header mb-3">
-    <div class="title-line"></div>
-    <h5 class="section-title">
-      <span style="font-size:20px; margin-right:6px;">📄</span> Justificantes registrados
-    </h5>
-  </div>
+    <div class="mt-4 content-box">
+      <div class="section-header mb-3">
+        <div class="title-line"></div>
+        <h5 class="section-title">
+          <span style="font-size:20px; margin-right:6px;">📄</span> Justificantes registrados
+        </h5>
+      </div>
 
-  <div class="just-box">
-    <table class="table table-bordered" id="tbJust">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Rol</th>
-          <th>Fecha registro</th>
-          <th>Fecha doc</th>
-          <th>Motivo</th>
-          <th>Archivo</th>
-          <th>Acción</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-</div>
-
-
+      <div class="just-box">
+        <table class="table table-bordered" id="tbJust">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Rol</th>
+              <th>Fecha registro</th>
+              <th>Fecha doc</th>
+              <th>Motivo</th>
+              <th>Archivo</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- MODALES (justificante) -->
@@ -242,45 +225,11 @@
 
   <!-- bootstrap -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Simulated backend -->
-  <script src="js/simdb.js"></script>
+  <!-- API real -->
   <script src="js/asistencias.api.js"></script>
 
   <script>
-    /*****************************************
-     *  LOGICA JS - LocalStorage + Render
-     *  Nombres claros y comentarios
-     *****************************************/
-
-    // --- helpers (localStorage) ---
-    function getRegistrations() { return JSON.parse(localStorage.getItem('regs') || '[]'); }
-    function saveRegistrations(arr) { localStorage.setItem('regs', JSON.stringify(arr)); }
-
-    function getJustificantes() { return JSON.parse(localStorage.getItem('justs') || '[]'); }
-    function saveJustificantes(arr) { localStorage.setItem('justs', JSON.stringify(arr)); }
-
-    function newId() { return 'id' + Date.now() + Math.floor(Math.random() * 1000); }
-
-    // --- generar cédula PAN (formato: X-XXXX-XXXX) ---
-    function generateCedula() {
-      const d = String(Math.floor(Math.random() * 9) + 1); // 1-9
-      const part4 = () => String(Math.floor(Math.random() * 10000)).padStart(4, '0'); // 0000-9999
-      return `${d}-${part4()}-${part4()}`;
-    }
-
-    // --- semilla inicial (si no hay datos) ---
-    function seedDataIfEmpty() {
-      if (!localStorage.getItem('regs')) {
-        const seed = [
-          { id: newId(), nombre: 'Jeremy Valdés', '9-1020-1111': generateCedula(), rol: 'Estudiante', curso: 'DSVIII', aula: '3-105', tipo: 'Entrada', fecha: '2025-11-26', hora: '07:55', estado: 'A tiempo' },
-          { id: newId(), nombre: 'Juan Pérez', '7-7020-1111': generateCedula(), rol: 'Estudiante', curso: 'DSVIII', aula: '3-105', tipo: 'Entrada', fecha: '2025-11-26', hora: '08:10', estado: 'Tarde' },
-          { id: newId(), nombre: 'Prof. Kexy Rodríguez', '8-2030-1111': generateCedula(), rol: 'Docente', aula: '3-105', tipo: 'Entrada', fecha: '2025-11-26', hora: '07:00', estado: 'A tiempo' }
-        ];
-        saveRegistrations(seed);
-      }
-      if (!localStorage.getItem('justs')) saveJustificantes([]);
-    }
-    seedDataIfEmpty();
+    let currentRegs = [];
 
     // --- badges según estado ---
     function stateBadge(status) {
@@ -311,8 +260,9 @@
     }
 
     // --- renderizar tablas estudiantiles y docentes ---
-    function renderAllTables() {
-      const regs = getRegistrations();
+    async function renderAllTables() {
+      const regs = await AsistenciasAPI.listRegistros(); // usa backend real
+      currentRegs = regs;
       const $tbEst = document.getElementById('tbEst');
       const $tbDoc = document.getElementById('tbDoc');
       $tbEst.innerHTML = '';
@@ -324,17 +274,16 @@
       const filterDocEstado = document.getElementById('filterDocEstado').value;
 
       regs.forEach(r => {
-        // estudiante
         if (r.rol === 'Estudiante') {
-          if (filterEstText && !r.nombre.toLowerCase().includes(filterEstText) && !(r.cedula||'').toLowerCase().includes(filterEstText)) return;
+          if (filterEstText && !r.nombre.toLowerCase().includes(filterEstText) && !(r.cedula || '').toLowerCase().includes(filterEstText)) return;
           if (filterEstEstado && r.estado !== filterEstEstado) return;
 
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${r.nombre}</td>
             <td class="td-cedula text-center">${r.cedula || '-'}</td>
-            <td>${r.curso || '-'}</td>
-            <td>${r.aula || '-'}</td>
+            <td>${r.grupo || '-'}</td>
+            <td>${r.aula_id || '-'}</td>
             <td>${r.tipo}</td>
             <td>${r.fecha}</td>
             <td>${r.hora}</td>
@@ -343,14 +292,14 @@
           `;
           $tbEst.appendChild(tr);
         } else { // docente
-          if (filterDocText && !r.nombre.toLowerCase().includes(filterDocText) && !(r.cedula||'').toLowerCase().includes(filterDocText)) return;
+          if (filterDocText && !r.nombre.toLowerCase().includes(filterDocText) && !(r.cedula || '').toLowerCase().includes(filterDocText)) return;
           if (filterDocEstado && r.estado !== filterDocEstado) return;
 
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${r.nombre}</td>
             <td class="td-cedula text-center">${r.cedula || '-'}</td>
-            <td>${r.aula || '-'}</td>
+            <td>${r.aula_id || '-'}</td>
             <td>${r.tipo}</td>
             <td>${r.fecha}</td>
             <td>${r.hora}</td>
@@ -365,17 +314,17 @@
     }
 
     // --- cambiar estado desde selector ---
-    document.addEventListener('change', function (ev) {
+    document.addEventListener('change', async function (ev) {
       if (ev.target && ev.target.classList.contains('sel-state')) {
         const id = ev.target.getAttribute('data-id');
         const newState = ev.target.value;
-        const regs = getRegistrations();
-        const idx = regs.findIndex(x => x.id === id);
-        if (idx === -1) return;
-        regs[idx].estado = newState;
-        saveRegistrations(regs);
-        renderAllTables();
-        if (newState === 'Justificado') openJustModalFor(id);
+        try {
+          await AsistenciasAPI.updateRegistro(id, { estado: newState }); // backend real
+          renderAllTables();
+          if (newState === 'Justificado') openJustModalFor(id);
+        } catch (e) {
+          alert("Error al actualizar estado");
+        }
       }
     });
 
@@ -387,7 +336,8 @@
     });
 
     function openJustModalFor(id) {
-      const reg = getRegistrations().find(x => x.id === id);
+      // SIMULADO: obtener reg desde backend, NO desde localStorage
+      const reg = getRegistrations().find(x => x.id === id); // SIMULADO
       if (!reg) return;
       document.getElementById('just_regId').value = id;
       document.getElementById('just_nombre').value = reg.nombre;
@@ -403,6 +353,7 @@
     // --- guardar justificante (archivo opcional) ---
     document.getElementById('formJust').addEventListener('submit', function (e) {
       e.preventDefault();
+      // SIMULADO: usa API real para crear justificante y actualizar estado
       const regId = document.getElementById('just_regId').value;
       const nombre = document.getElementById('just_nombre').value;
       const rol = document.getElementById('just_rol').value;
@@ -412,10 +363,8 @@
       const ref = document.getElementById('just_ref').value;
       const fileInput = document.getElementById('just_file');
 
-      // si no hay archivo, guardamos igual
       if (!fileInput.files.length) {
-        saveJustificantes([{ id: newId(), regId, nombre, rol, fechaReg, fechaDoc, motivo, ref, fileName: null, fileData: null, created: new Date().toISOString() }, ...getJustificantes()]);
-        // actualizar estado registro a Justificado
+        // SIMULADO: actualizar localStorage; reemplazar por llamada a backend
         const regs = getRegistrations();
         const idx = regs.findIndex(x => x.id === regId);
         if (idx !== -1) { regs[idx].estado = 'Justificado'; saveRegistrations(regs); }
@@ -424,11 +373,11 @@
         return;
       }
 
-      // si hay archivo lo leemos
       const file = fileInput.files[0];
       const reader = new FileReader();
       reader.onload = function (evt) {
-        saveJustificantes([{ id: newId(), regId, nombre, rol, fechaReg, fechaDoc, motivo, ref, fileName: file.name, fileData: evt.target.result, created: new Date().toISOString() }, ...getJustificantes()]);
+        const newJustificante = { id: newId(), regId, nombre, rol, fechaReg, fechaDoc, motivo, ref, fileName: file.name, fileData: evt.target.result, created: new Date().toISOString() };
+        // SIMULADO: guarda en localStorage; usa backend real
         const regs = getRegistrations();
         const idx = regs.findIndex(x => x.id === regId);
         if (idx !== -1) { regs[idx].estado = 'Justificado'; saveRegistrations(regs); }
@@ -440,6 +389,7 @@
 
     // --- render justificantes ---
     function renderJustificantesTable() {
+      // SIMULADO: reemplazar getJustificantes() por API real
       const justs = getJustificantes();
       const tbody = document.querySelector('#tbJust tbody');
       tbody.innerHTML = '';
@@ -464,6 +414,7 @@
     // ver/eliminar justificantes
     document.addEventListener('click', function (ev) {
       if (ev.target && ev.target.classList.contains('view-just')) {
+        // SIMULADO: usa API real
         const id = ev.target.getAttribute('data-id');
         const j = getJustificantes().find(x => x.id === id);
         if (!j) return;
@@ -478,6 +429,7 @@
       }
 
       if (ev.target && ev.target.classList.contains('del-just')) {
+        // SIMULADO: usa API real
         const id = ev.target.getAttribute('data-id');
         if (!confirm('¿Eliminar justificante?')) return;
         saveJustificantes(getJustificantes().filter(x => x.id !== id));
@@ -485,101 +437,8 @@
       }
     });
 
-    // --- simuladores (agregar registros de prueba) ---
-    function timeNow() { return new Date().toTimeString().slice(0, 5); }
-    function dayNow() { return new Date().toISOString().slice(0, 10); }
-
-    function addRegistration(reg) { saveRegistrations([reg, ...getRegistrations()]); renderAllTables(); }
-
-    document.getElementById('simEstLlegada').addEventListener('click', () => {
-      addRegistration({
-        id: newId(),
-        nombre: 'Estudiante ' + Math.floor(Math.random() * 900 + 100),
-        cedula: generateCedula(),
-        rol: 'Estudiante',
-        curso: 'DSVIII',
-        aula: '3-105',
-        tipo: 'Entrada',
-        fecha: dayNow(),
-        hora: timeNow(),
-        estado: 'A tiempo'
-      });
-    });
-
-    document.getElementById('simEstTarde').addEventListener('click', () => {
-      addRegistration({
-        id: newId(),
-        nombre: 'Estudiante ' + Math.floor(Math.random() * 900 + 100),
-        cedula: generateCedula(),
-        rol: 'Estudiante',
-        curso: 'DSVIII',
-        aula: '3-105',
-        tipo: 'Entrada',
-        fecha: dayNow(),
-        hora: '08:' + String(Math.floor(Math.random() * 30)).padStart(2, '0'),
-        estado: 'Tarde'
-      });
-    });
-
-    // salida estudiante: estado "Cumplió horario" (verde)
-    document.getElementById('simEstSalida').addEventListener('click', () => {
-      addRegistration({
-        id: newId(),
-        nombre: 'Estudiante ' + Math.floor(Math.random() * 900 + 100),
-        cedula: generateCedula(),
-        rol: 'Estudiante',
-        curso: 'DSVIII',
-        aula: '3-105',
-        tipo: 'Salida',
-        fecha: dayNow(),
-        hora: timeNow(),
-        estado: 'Cumplió horario'
-      });
-    });
-
-    document.getElementById('simDocLlegada').addEventListener('click', () => {
-      addRegistration({
-        id: newId(),
-  nombre: 'Prof. Ejemplo',
-        cedula: generateCedula(),
-        rol: 'Docente',
-        aula: '3-105',
-        tipo: 'Entrada',
-        fecha: dayNow(),
-        hora: timeNow(),
-        estado: 'A tiempo'
-      });
-    });
-
-    document.getElementById('simDocTarde').addEventListener('click', () => {
-      addRegistration({
-        id: newId(),
-  nombre: 'Prof. Ejemplo',
-        cedula: generateCedula(),
-        rol: 'Docente',
-        aula: '3-105',
-        tipo: 'Entrada',
-        fecha: dayNow(),
-        hora: '07:' + String(Math.floor(Math.random() * 60)).padStart(2, '0'),
-        estado: 'Tarde'
-      });
-    });
-
-    document.getElementById('simDocSalida').addEventListener('click', () => {
-      addRegistration({
-        id: newId(),
-  nombre: 'Prof. Ejemplo',
-        cedula: generateCedula(),
-        rol: 'Docente',
-        aula: '3-105',
-        tipo: 'Salida',
-        fecha: dayNow(),
-        hora: timeNow(),
-        estado: 'Cumplió horario'
-      });
-    });
-
     // --- export CSV (incluye cédula) ---
+    // (Exportación intacta; actualmente usa getRegistrations: cámbialo a backend cuando quieras)
     function exportCSV(filename, rows, keys) {
       const csv = [keys.join(',')].concat(
         rows.map(r => keys.map(k => `"${((r[k] || '') + '').toString().replace(/"/g, '""')}"`).join(','))
@@ -597,19 +456,19 @@
     }
 
     document.getElementById('exportAll').addEventListener('click', () => {
-      const rows = getRegistrations();
+      const rows = getRegistrations(); // SIMULADO
       if (!rows.length) return alert('No hay registros para exportar');
       exportCSV('asistencias_completo.csv', rows, ['nombre', 'cedula', 'rol', 'curso', 'aula', 'tipo', 'fecha', 'hora', 'estado']);
     });
 
     document.getElementById('exportEst').addEventListener('click', () => {
-      const rows = getRegistrations().filter(r => r.rol === 'Estudiante');
+      const rows = getRegistrations().filter(r => r.rol === 'Estudiante'); // SIMULADO
       if (!rows.length) return alert('No hay registros de estudiantes');
       exportCSV('asistencias_estudiantes.csv', rows, ['nombre', 'cedula', 'curso', 'aula', 'tipo', 'fecha', 'hora', 'estado']);
     });
 
     document.getElementById('exportDoc').addEventListener('click', () => {
-      const rows = getRegistrations().filter(r => r.rol === 'Docente');
+      const rows = getRegistrations().filter(r => r.rol === 'Docente'); // SIMULADO
       if (!rows.length) return alert('No hay registros de docentes');
       exportCSV('asistencias_docentes.csv', rows, ['nombre', 'cedula', 'aula', 'tipo', 'fecha', 'hora', 'estado']);
     });
@@ -620,35 +479,15 @@
     document.getElementById('filterDoc').addEventListener('input', renderAllTables);
     document.getElementById('filterDocEstado').addEventListener('change', renderAllTables);
 
-    // ver/eliminar justificantes en tabla (delegación)
-    document.addEventListener('click', function (ev) {
-      if (ev.target && ev.target.classList.contains('view-just')) {
-        const id = ev.target.getAttribute('data-id');
-        const j = getJustificantes().find(x => x.id === id);
-        if (!j) return;
-        document.getElementById('justDetailBody').innerHTML = `
-          <h5>${j.nombre} — ${j.rol}</h5>
-          <p><strong>Fecha registro:</strong> ${j.fechaReg}</p>
-          <p><strong>Fecha doc:</strong> ${j.fechaDoc}</p>
-          <p><strong>Motivo:</strong><br>${j.motivo}</p>
-          <p><strong>Archivo:</strong><br>${j.fileName ? `<a href="${j.fileData}" download="${j.fileName}">${j.fileName}</a>` : '<i>No adjuntado</i>'}</p>
-        `;
-        new bootstrap.Modal(document.getElementById('modalJustView')).show();
-      }
-
-      if (ev.target && ev.target.classList.contains('del-just')) {
-        const id = ev.target.getAttribute('data-id');
-        if (!confirm('¿Eliminar justificante?')) return;
-        saveJustificantes(getJustificantes().filter(x => x.id !== id));
-        renderJustificantesTable();
-      }
-    });
-
-    document.getElementById('clearAll').addEventListener('click', () => {
+    document.getElementById('clearAll').addEventListener('click', async () => {
       if (confirm('¿Estás seguro de que deseas eliminar todos los registros?')) {
-        localStorage.removeItem('regs');
-        renderAllTables();
-        alert('Todos los registros han sido eliminados.');
+        try {
+          await AsistenciasAPI.deleteAllRegistros(); // backend real
+          renderAllTables();
+          alert('Todos los registros han sido eliminados de la base de datos.');
+        } catch (e) {
+          alert('Error al eliminar registros.');
+        }
       }
     });
 

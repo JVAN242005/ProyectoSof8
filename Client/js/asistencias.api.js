@@ -21,56 +21,104 @@
  */
 (function(){
   const db = window.SimDB, api = window.SimAPI;
+  const API_URL = "http://localhost:8000/api";
 
+  // Función para convertir registros a CSV
   function csvString(rows, keys){
     return [keys.join(',')].concat(
       rows.map(r => keys.map(k => `"${(((r[k]||'')+'').toString()).replace(/"/g,'""')}"`).join(','))
     ).join('\n');
   }
 
+  // API para consumir el backend real
   window.AsistenciasAPI = {
-    async listRegistros({rol, estado, search}={}){
-      await api.delay();
-      let regs = db.getRegs();
-      if(rol) regs = regs.filter(r=>r.rol===rol);
-      if(estado) regs = regs.filter(r=>r.estado===estado);
-      if(search){
+    // Listar asistencias con JOIN
+    async listRegistros({rol, estado, search}={}) {
+      const res = await fetch(`${API_URL}/asistencias`);
+      const data = await res.json();
+      let regs = data.asistencias || [];
+      if (rol) regs = regs.filter(r => r.rol === rol);
+      if (estado) regs = regs.filter(r => r.estado === estado);
+      if (search) {
         const s = search.toLowerCase();
         regs = regs.filter(r => (r.nombre||'').toLowerCase().includes(s) || (r.cedula||'').toLowerCase().includes(s));
       }
       return regs;
     },
-    async createRegistro(reg){
-      await api.delay();
-      const r = Object.assign({ id: api.id('r'), fecha: new Date().toISOString().slice(0,10), hora: new Date().toTimeString().slice(0,5) }, reg);
-      db.setRegs([r, ...db.getRegs()]);
-      return r;
+
+    // Actualizar estado de asistencia
+    async updateRegistro(id, patch) {
+      const res = await fetch(`${API_URL}/asistencias/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch)
+      });
+      if (!res.ok) throw new Error("No se pudo actualizar");
+      return await res.json();
     },
-    async updateRegistro(id, patch){
-      await api.delay();
-      const regs = db.getRegs();
-      const i = regs.findIndex(x=>x.id===id);
-      if(i===-1) throw new Error('Registro no encontrado');
-      regs[i] = Object.assign({}, regs[i], patch);
-      db.setRegs(regs);
-      return regs[i];
+
+    // Listar justificantes
+    async listJustificantes() {
+      const res = await fetch(`${API_URL}/justificantes`);
+      const data = await res.json();
+      return data.justificantes || [];
     },
-    async listJustificantes(){ await api.delay(); return db.getJusts(); },
-    async getJustificante(id){ await api.delay(); return db.getJusts().find(x=>x.id===id)||null; },
-    async createJustificante(just){
-      await api.delay();
-      const j = Object.assign({ id: api.id('j'), created: new Date().toISOString() }, just);
-      db.setJusts([j, ...db.getJusts()]);
-      if(j.regId){
-        const regs = db.getRegs();
-        const i = regs.findIndex(x=>x.id===j.regId);
-        if(i!==-1){ regs[i].estado = 'Justificado'; db.setRegs(regs); }
+
+    // Crear justificante
+    async createJustificante(just) {
+      const res = await fetch(`${API_URL}/justificantes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(just)
+      });
+      if (!res.ok) throw new Error("No se pudo crear justificante");
+      return await res.json();
+    },
+
+    // Eliminar todos los registros de asistencias y justificantes
+    async deleteAllRegistros() {
+      const res = await fetch(`${API_URL}/asistencias/all`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error("No se pudo eliminar");
+      return await res.json();
+    },
+
+    // Exportar CSV usando los datos del backend
+    async makeCSVAll() {
+      const regs = await this.listRegistros();
+      const keys=['nombre','cedula','rol','grupo','aula_id','tipo','fecha','hora','estado'];
+      return csvString(regs, keys);
+    },
+    async makeCSVEst() {
+      const regs = await this.listRegistros({rol:'Estudiante'});
+      const keys=['nombre','cedula','grupo','aula_id','tipo','fecha','hora','estado'];
+      return csvString(regs, keys);
+    },
+    async makeCSVDoc() {
+      const regs = await this.listRegistros({rol:'Docente'});
+      const keys=['nombre','cedula','aula_id','tipo','fecha','hora','estado'];
+      return csvString(regs, keys);
+    },
+
+    // Marcar asistencia por QR
+    async marcarQR(qrTexto) {
+      try {
+        const res = await fetch(`${API_URL}/asistencias/qr`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ qr_texto: qrTexto })
+        });
+        if (!res.ok) {
+          const error = await res.json();
+          alert(error.detail || "Error al registrar asistencia");
+          return;
+        }
+        alert("Asistencia registrada correctamente");
+        renderAllTables();
+      } catch (e) {
+        alert("Error de conexión con el servidor");
       }
-      return j;
-    },
-    async deleteJustificante(id){ await api.delay(); db.setJusts(db.getJusts().filter(x=>x.id!==id)); return {ok:true}; },
-    makeCSVAll(){ const keys=['nombre','cedula','rol','curso','aula','tipo','fecha','hora','estado']; return csvString(db.getRegs(), keys); },
-    makeCSVEst(){ const keys=['nombre','cedula','curso','aula','tipo','fecha','hora','estado']; return csvString(db.getRegs().filter(r=>r.rol==='Estudiante'), keys); },
-    makeCSVDoc(){ const keys=['nombre','cedula','aula','tipo','fecha','hora','estado']; return csvString(db.getRegs().filter(r=>r.rol==='Docente'), keys); }
+    }
   };
 })();

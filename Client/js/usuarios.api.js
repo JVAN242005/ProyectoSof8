@@ -21,7 +21,11 @@
   const API_URL = 'http://localhost:8000/api/usuarios';
 
   window.UsuariosAPI = {
-    validarCedula(c){ return cedulaRegex.test(c); },
+    validarCedula(ced) {
+      const c = (ced || '').trim();
+      // permite 1-2 dígitos, luego 3-4, luego 4
+      return /^\d{1,2}-\d{3,4}-\d{4}$/.test(c);
+    },
     async listar({search}={}){ 
       let url = API_URL;
       if (search) url += `?search=${encodeURIComponent(search)}`;

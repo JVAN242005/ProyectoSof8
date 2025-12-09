@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Body, Path
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import text  
@@ -7,6 +7,8 @@ from uuid import uuid4
 from database import engine, Base, get_db
 import datetime
 import models
+import base64
+from datetime import datetime, date, timedelta, time
 
 # 1. Crear tablas en MySQL (si no existen)
 Base.metadata.create_all(bind=engine)
@@ -21,9 +23,9 @@ app = FastAPI(
 # 3. Permitir conexión desde frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5500", "http://127.0.0.1:5500"],
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -176,3 +178,260 @@ def eliminar_usuario(id: int, db: Session = Depends(get_db)):
     db.delete(u)
     db.commit()
     return {"success": True, "id": id}
+
+
+# ------------- LECTURA DE QR Y REGISTRO DE ASISTENCIA -------------
+
+# Configuración de horarios
+HORA_ENTRADA = time(8, 0)   # 8:00 AM (referencia, ya no se usa para tardanza)
+HORA_SALIDA  = time(12, 0)  # ejemplo
+
+# Ventana de marcaje para estudiantes y tolerancia de tardanza relativa al docente
+VENTANA_MIN = 30            # minutos que dura la ventana de marcaje para estudiantes
+TARDANZA_EST_MIN = 2        # minutos para considerar tardanza al estudiante tras marcar el docente
+
+# Estado de ventana por aula (aula_id: dict con fin y tardanza)
+VENTANAS_ACTIVAS = {}
+
+def extraer_info(base64_str):
+    texto = base64.b64decode(base64_str).decode('utf-8')
+    if '@' in texto:
+        return texto.split('@', 1)
+    return texto, None
+
+class QRAsistencia(BaseModel):
+    qr_texto: str
+
+# Registrar asistencia desde QR
+@app.post("/api/asistencias/qr")
+def registrar_asistencia_qr(body: QRAsistencia, db: Session = Depends(get_db)):
+    cedula, _ = extraer_info(body.qr_texto)
+    partes = cedula.split('-')
+    partes[-1] = partes[-1].lstrip('0')
+    cedula = '-'.join(partes)
+
+    usuario = db.query(models.Usuario).filter(models.Usuario.cedula == cedula).first()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    ahora = datetime.now()
+    hoy = ahora.date().isoformat()
+    aula_id = getattr(usuario, "aula_id", None)
+
+    # Consulta registros de hoy
+    entrada_hoy = db.query(models.Asistencia).filter(
+        models.Asistencia.usuario_id == usuario.id,
+        models.Asistencia.fecha == hoy,
+        models.Asistencia.tipo == "Entrada"
+    ).first()
+    salida_hoy = db.query(models.Asistencia).filter(
+        models.Asistencia.usuario_id == usuario.id,
+        models.Asistencia.fecha == hoy,
+        models.Asistencia.tipo == "Salida"
+    ).first()
+
+    # Si es docente y ya tiene entrada y no tiene salida → registra salida
+    if usuario.rol == "Docente" and entrada_hoy and not salida_hoy:
+        nueva = models.Asistencia(
+            usuario_id=usuario.id,
+            rol="Docente",
+            tipo="Salida",
+            fecha=hoy,
+            hora=ahora.time().strftime("%H:%M:%S"),
+            estado="Cumplió horario",
+            aula_id=aula_id
+        )
+        db.add(nueva)
+        VENTANAS_ACTIVAS.pop(aula_id, None)
+        estudiantes_q = db.query(models.Usuario).filter(models.Usuario.rol == "Estudiante")
+        if hasattr(models.Usuario, "aula_id") and aula_id is not None:
+            estudiantes_q = estudiantes_q.filter(models.Usuario.aula_id == aula_id)
+        estudiantes = estudiantes_q.all()
+        for est in estudiantes:
+            existe = db.query(models.Asistencia).filter(
+                models.Asistencia.usuario_id == est.id,
+                models.Asistencia.fecha == hoy,
+                models.Asistencia.tipo == "Entrada"
+            ).first()
+            if not existe:
+                db.add(models.Asistencia(
+                    usuario_id=est.id,
+                    rol="Estudiante",
+                    tipo="Entrada",
+                    fecha=hoy,
+                    hora=ahora.time().strftime("%H:%M:%S"),
+                    estado="Ausente",
+                    aula_id=aula_id
+                ))
+        db.commit()
+        db.refresh(nueva)
+        return {"asistencia": {"id": nueva.id, "usuario_id": nueva.usuario_id, "rol": nueva.rol,
+                               "tipo": nueva.tipo, "fecha": nueva.fecha, "hora": nueva.hora, "estado": nueva.estado}}
+
+    # Control de duplicados de entrada
+    if entrada_hoy:
+        raise HTTPException(status_code=409, detail="Ya existe un registro de entrada para este usuario hoy")
+
+    # Lógica de ventana y estado
+    if usuario.rol == "Docente":
+        # Abre ventana para estudiantes y fija tolerancia de tardanza
+        VENTANAS_ACTIVAS[aula_id] = {
+            "fin": ahora + timedelta(minutes=VENTANA_MIN),
+            "tardanza": ahora + timedelta(minutes=TARDANZA_EST_MIN),
+            "inicio": ahora
+        }
+        tipo = "Entrada"
+        estado = "A tiempo"  # Docente siempre “A tiempo” al entrar
+    elif usuario.rol == "Estudiante":
+        ventana = VENTANAS_ACTIVAS.get(aula_id)
+        if not ventana or ahora > ventana["fin"]:
+            raise HTTPException(status_code=403, detail="Ventana de marcaje no activa(Profesor, faltante)")
+        tipo = "Entrada"
+        estado = "A tiempo" if ahora <= ventana["tardanza"] else "Tarde"
+    else:
+        raise HTTPException(status_code=403, detail="Rol no permitido")
+
+    nueva = models.Asistencia(
+        usuario_id=usuario.id,
+        rol=usuario.rol,
+        tipo=tipo,
+        fecha=hoy,
+        hora=ahora.time().strftime("%H:%M:%S"),
+        estado=estado,
+        aula_id=aula_id
+    )
+    db.add(nueva)
+    db.commit()
+    db.refresh(nueva)
+    return {"asistencia": {
+        "id": nueva.id, "usuario_id": nueva.usuario_id, "nombre": usuario.nombre,
+        "cedula": usuario.cedula, "rol": nueva.rol, "tipo": nueva.tipo,
+        "fecha": nueva.fecha, "hora": nueva.hora, "estado": nueva.estado
+    }}
+
+#----------------- MARCAR SALIDA PROFESOR Y ACTUALIZAR ESTUDIANTES AUSENTES ------------------
+@app.post("/api/profesor/salida")
+def marcar_salida_profesor(aula_id: int = Body(...), profesor_cedula: str = Body(...), db: Session = Depends(get_db)):
+    profesor_q = db.query(models.Usuario).filter(
+        models.Usuario.cedula == profesor_cedula,
+        models.Usuario.rol == "Docente"
+    )
+    if hasattr(models.Usuario, "aula_id") and aula_id is not None:
+        profesor_q = profesor_q.filter(models.Usuario.aula_id == aula_id)
+    profesor = profesor_q.first()
+    if not profesor:
+        raise HTTPException(status_code=404, detail="Profesor no encontrado")
+
+    hoy = datetime.date.today().isoformat()
+    salida_hoy = db.query(models.Asistencia).filter(
+        models.Asistencia.usuario_id == profesor.id,
+        models.Asistencia.fecha == hoy,
+        models.Asistencia.tipo == "Salida"
+    ).first()
+    if salida_hoy:
+        raise HTTPException(status_code=409, detail="Ya existe un registro de salida para este profesor hoy")
+
+    ahora = datetime.datetime.now()
+
+    # Registra la salida del profesor
+    nueva = models.Asistencia(
+        usuario_id=profesor.id,
+        rol="Docente",
+        tipo="Salida",
+        fecha=ahora.date().isoformat(),
+        hora=ahora.time().strftime("%H:%M:%S"),
+        estado="Cumplió horario",
+        aula_id=aula_id
+    )
+    db.add(nueva)
+
+    # Marca como "Ausente" a los estudiantes del aula que no registraron entrada hoy
+    hoy = ahora.date().isoformat()
+    estudiantes_q = db.query(models.Usuario).filter(models.Usuario.rol == "Estudiante")
+    if hasattr(models.Usuario, "aula_id") and aula_id is not None:
+        estudiantes_q = estudiantes_q.filter(models.Usuario.aula_id == aula_id)
+    estudiantes = estudiantes_q.all()
+    for est in estudiantes:
+        asistencia = db.query(models.Asistencia).filter(
+            models.Asistencia.usuario_id == est.id,
+            models.Asistencia.fecha == hoy,
+            models.Asistencia.tipo == "Entrada"
+        ).first()
+        if not asistencia:
+            nueva_ausente = models.Asistencia(
+                usuario_id=est.id,
+                rol="Estudiante",
+                tipo="Entrada",
+                fecha=hoy,
+                hora=ahora.time().strftime("%H:%M:%S"),
+                estado="Ausente",
+                aula_id=aula_id
+            )
+            db.add(nueva_ausente)
+
+    db.commit()
+    return {"mensaje": "Salida registrada y estudiantes ausentes actualizados"}
+
+#----------------- LISTAR ASISTENCIAS ------------------
+@app.get("/api/asistencias")
+def listar_asistencias(db: Session = Depends(get_db)):
+    registros = (
+        db.query(
+            models.Asistencia.id,
+            models.Asistencia.usuario_id,
+            models.Usuario.nombre,
+            models.Usuario.cedula,
+            models.Usuario.rol,
+            models.Usuario.grupo,
+            models.Asistencia.aula_id,
+            models.Aula.aula,
+            models.Asistencia.tipo,
+            models.Asistencia.fecha,
+            models.Asistencia.hora,
+            models.Asistencia.estado
+        )
+        .join(models.Usuario, models.Asistencia.usuario_id == models.Usuario.id)
+        .outerjoin(models.Aula, models.Asistencia.aula_id == models.Aula.id)
+        .all()
+    )
+    return {"asistencias": [
+        {
+            "id": r.id,
+            "usuario_id": r.usuario_id,
+            "nombre": r.nombre,
+            "cedula": r.cedula,
+            "rol": r.rol,
+            "grupo": r.grupo,
+            "aula_id": r.aula_id,
+            "aula": r.aula,
+            "tipo": r.tipo,
+            "fecha": r.fecha,
+            "hora": r.hora,
+            "estado": r.estado
+        }
+        for r in registros
+    ]}
+
+@app.delete("/api/asistencias/all")
+def eliminar_todos_registros(db: Session = Depends(get_db)):
+    db.query(models.Asistencia).delete()
+    db.query(models.Justificante).delete()
+    db.commit()
+    return {"success": True, "mensaje": "Todos los registros eliminados"}
+
+class AsistenciaUpdate(BaseModel):
+    estado: str | None = None
+
+@app.patch("/api/asistencias/{id}")
+def actualizar_asistencia(id: int = Path(...), body: AsistenciaUpdate = Body(...), db: Session = Depends(get_db)):
+    reg = db.query(models.Asistencia).filter(models.Asistencia.id == id).first()
+    if not reg:
+        raise HTTPException(status_code=404, detail="Asistencia no encontrada")
+    if body.estado:
+        reg.estado = body.estado
+    db.commit()
+    db.refresh(reg)
+    return {"asistencia": {
+        "id": reg.id, "usuario_id": reg.usuario_id, "rol": reg.rol,
+        "tipo": reg.tipo, "fecha": reg.fecha, "hora": reg.hora, "estado": reg.estado
+    }}

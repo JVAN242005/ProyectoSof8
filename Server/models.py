@@ -8,7 +8,7 @@ class Usuario(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     nombre = Column(String(100), nullable=False)
-    cedula = Column(String(11), unique=True, nullable=False)
+    cedula = Column(String(12), unique=True, nullable=False)
     rol = Column(Enum('Estudiante', 'Docente', 'Administrador'), nullable=False)
     grupo = Column(String(20))
     correo = Column(String(120), unique=True)
