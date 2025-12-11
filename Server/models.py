@@ -48,7 +48,6 @@ class Asistencia(Base):  # NOTA: Se llama "Asistencia" no "Registro"
 
 class Justificante(Base):
     __tablename__ = "justificantes"
-    
     id = Column(Integer, primary_key=True, autoincrement=True)
     asistencia_id = Column(Integer, ForeignKey('asistencias.id'), nullable=False)
     usuario_id = Column(Integer, ForeignKey('usuarios.id'), nullable=False)
@@ -60,7 +59,3 @@ class Justificante(Base):
     archivo_url = Column(String(500))
     archivo_mime = Column(String(50))
     created_at = Column(DateTime, default=datetime.now)
-    
-    # Relaciones
-    asistencia = relationship("Asistencia")
-    usuario = relationship("Usuario")

@@ -336,8 +336,8 @@
     });
 
     function openJustModalFor(id) {
-      // SIMULADO: obtener reg desde backend, NO desde localStorage
-      const reg = getRegistrations().find(x => x.id === id); // SIMULADO
+      // Usa los registros reales obtenidos del backend
+      const reg = currentRegs.find(x => String(x.id) === String(id));
       if (!reg) return;
       document.getElementById('just_regId').value = id;
       document.getElementById('just_nombre').value = reg.nombre;
@@ -351,57 +351,50 @@
     }
 
     // --- guardar justificante (archivo opcional) ---
-    document.getElementById('formJust').addEventListener('submit', function (e) {
+    document.getElementById('formJust').addEventListener('submit', async function (e) {
       e.preventDefault();
-      // SIMULADO: usa API real para crear justificante y actualizar estado
       const regId = document.getElementById('just_regId').value;
-      const nombre = document.getElementById('just_nombre').value;
-      const rol = document.getElementById('just_rol').value;
       const fechaReg = document.getElementById('just_fechaReg').value;
       const fechaDoc = document.getElementById('just_fechaDoc').value;
       const motivo = document.getElementById('just_motivo').value;
-      const ref = document.getElementById('just_ref').value;
-      const fileInput = document.getElementById('just_file');
 
-      if (!fileInput.files.length) {
-        // SIMULADO: actualizar localStorage; reemplazar por llamada a backend
-        const regs = getRegistrations();
-        const idx = regs.findIndex(x => x.id === regId);
-        if (idx !== -1) { regs[idx].estado = 'Justificado'; saveRegistrations(regs); }
-        bootstrap.Modal.getInstance(document.getElementById('modalJust')).hide();
-        renderAllTables();
-        return;
-      }
+      // Busca el registro de asistencia para obtener usuario_id
+      const reg = currentRegs.find(x => String(x.id) === String(regId));
+      if (!reg) return alert("No se encontró el registro de asistencia");
+      const usuarioId = reg.usuario_id;
 
-      const file = fileInput.files[0];
-      const reader = new FileReader();
-      reader.onload = function (evt) {
-        const newJustificante = { id: newId(), regId, nombre, rol, fechaReg, fechaDoc, motivo, ref, fileName: file.name, fileData: evt.target.result, created: new Date().toISOString() };
-        // SIMULADO: guarda en localStorage; usa backend real
-        const regs = getRegistrations();
-        const idx = regs.findIndex(x => x.id === regId);
-        if (idx !== -1) { regs[idx].estado = 'Justificado'; saveRegistrations(regs); }
-        bootstrap.Modal.getInstance(document.getElementById('modalJust')).hide();
-        renderAllTables();
+      // Payload con los nombres correctos
+      const payload = {
+        asistencia_id: Number(regId),
+        usuario_id: Number(usuarioId),
+        fecha_registro: fechaReg,
+        fecha_documento: fechaDoc,
+        motivo: motivo
       };
-      reader.readAsDataURL(file);
+
+      try {
+        await AsistenciasAPI.createJustificante(payload); // <-- usa la API real
+        bootstrap.Modal.getInstance(document.getElementById('modalJust')).hide();
+        renderJustificantesTable();
+      } catch (err) {
+        alert('Error al guardar justificante');
+      }
     });
 
     // --- render justificantes ---
-    function renderJustificantesTable() {
-      // SIMULADO: reemplazar getJustificantes() por API real
-      const justs = getJustificantes();
+    async function renderJustificantesTable() {
+      const justs = await AsistenciasAPI.listJustificantes();
       const tbody = document.querySelector('#tbJust tbody');
       tbody.innerHTML = '';
       justs.forEach(j => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${j.nombre}</td>
-          <td>${j.rol}</td>
-          <td>${j.fechaReg}</td>
-          <td>${j.fechaDoc}</td>
+          <td>${j.rol || ''}</td>
+          <td>${j.fecha_registro}</td>
+          <td>${j.fecha_documento}</td>
           <td>${j.motivo}</td>
-          <td>${j.fileName ? `<a href="${j.fileData}" download="${j.fileName}">${j.fileName}</a>` : '<i>Sin archivo</i>'}</td>
+          <td><i>Sin archivo</i></td>
           <td>
             <button data-id="${j.id}" class="btn btn-sm btn-outline-primary view-just">Ver</button>
             <button data-id="${j.id}" class="btn btn-sm btn-outline-danger del-just ms-1">Eliminar</button>
@@ -412,39 +405,34 @@
     }
 
     // ver/eliminar justificantes
-    document.addEventListener('click', function (ev) {
+    document.addEventListener('click', async function (ev) {
+      // Ver justificante
       if (ev.target && ev.target.classList.contains('view-just')) {
-        // SIMULADO: usa API real
         const id = ev.target.getAttribute('data-id');
-        const j = getJustificantes().find(x => x.id === id);
-        if (!j) return;
+        const j = await AsistenciasAPI.getJustificante(id);
         document.getElementById('justDetailBody').innerHTML = `
           <h5>${j.nombre} — ${j.rol}</h5>
-          <p><strong>Fecha registro:</strong> ${j.fechaReg}</p>
-          <p><strong>Fecha doc:</strong> ${j.fechaDoc}</p>
+          <p><strong>Fecha registro:</strong> ${j.fecha_registro}</p>
+          <p><strong>Fecha doc:</strong> ${j.fecha_documento}</p>
           <p><strong>Motivo:</strong><br>${j.motivo}</p>
-          <p><strong>Archivo:</strong><br>${j.fileName ? `<a href="${j.fileData}" download="${j.fileName}">${j.fileName}</a>` : '<i>No adjuntado</i>'}</p>
+          <p><strong>Archivo:</strong><br>${j.archivo_nombre ? `<a href="${j.archivo_url}" download="${j.archivo_nombre}">${j.archivo_nombre}</a>` : '<i>No adjuntado</i>'}</p>
         `;
         new bootstrap.Modal(document.getElementById('modalJustView')).show();
       }
 
+      // Eliminar justificante
       if (ev.target && ev.target.classList.contains('del-just')) {
-        // SIMULADO: usa API real
         const id = ev.target.getAttribute('data-id');
         if (!confirm('¿Eliminar justificante?')) return;
-        saveJustificantes(getJustificantes().filter(x => x.id !== id));
+        await AsistenciasAPI.deleteJustificante(id);
         renderJustificantesTable();
       }
     });
 
     // --- export CSV (incluye cédula) ---
     // (Exportación intacta; actualmente usa getRegistrations: cámbialo a backend cuando quieras)
-    function exportCSV(filename, rows, keys) {
-      const csv = [keys.join(',')].concat(
-        rows.map(r => keys.map(k => `"${((r[k] || '') + '').toString().replace(/"/g, '""')}"`).join(','))
-      ).join('\n');
-
-      const blob = new Blob([csv], { type: 'text/csv' });
+    function exportCSV(filename, csvString) {
+      const blob = new Blob([csvString], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -455,22 +443,22 @@
       URL.revokeObjectURL(url);
     }
 
-    document.getElementById('exportAll').addEventListener('click', () => {
-      const rows = getRegistrations(); // SIMULADO
-      if (!rows.length) return alert('No hay registros para exportar');
-      exportCSV('asistencias_completo.csv', rows, ['nombre', 'cedula', 'rol', 'curso', 'aula', 'tipo', 'fecha', 'hora', 'estado']);
+    document.getElementById('exportAll').addEventListener('click', async () => {
+      const csv = await AsistenciasAPI.makeCSVAll();
+      if (!csv.trim()) return alert('No hay registros para exportar');
+      exportCSV('asistencias_completo.csv', csv.split('\n').map(line => line.split(',')), ['nombre','cedula','rol','grupo','aula_id','tipo','fecha','hora','estado']);
     });
 
-    document.getElementById('exportEst').addEventListener('click', () => {
-      const rows = getRegistrations().filter(r => r.rol === 'Estudiante'); // SIMULADO
-      if (!rows.length) return alert('No hay registros de estudiantes');
-      exportCSV('asistencias_estudiantes.csv', rows, ['nombre', 'cedula', 'curso', 'aula', 'tipo', 'fecha', 'hora', 'estado']);
+    document.getElementById('exportEst').addEventListener('click', async () => {
+      const csv = await AsistenciasAPI.makeCSVEst();
+      if (!csv.trim()) return alert('No hay registros de estudiantes');
+      exportCSV('asistencias_estudiantes.csv', csv.split('\n').map(line => line.split(',')), ['nombre','cedula','grupo','aula_id','tipo','fecha','hora','estado']);
     });
 
-    document.getElementById('exportDoc').addEventListener('click', () => {
-      const rows = getRegistrations().filter(r => r.rol === 'Docente'); // SIMULADO
-      if (!rows.length) return alert('No hay registros de docentes');
-      exportCSV('asistencias_docentes.csv', rows, ['nombre', 'cedula', 'aula', 'tipo', 'fecha', 'hora', 'estado']);
+    document.getElementById('exportDoc').addEventListener('click', async () => {
+      const csv = await AsistenciasAPI.makeCSVDoc();
+      if (!csv.trim()) return alert('No hay registros de docentes');
+      exportCSV('asistencias_docentes.csv', csv.split('\n').map(line => line.split(',')), ['nombre','cedula','aula_id','tipo','fecha','hora','estado']);
     });
 
     // filtros

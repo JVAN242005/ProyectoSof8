@@ -435,3 +435,139 @@ def actualizar_asistencia(id: int = Path(...), body: AsistenciaUpdate = Body(...
         "id": reg.id, "usuario_id": reg.usuario_id, "rol": reg.rol,
         "tipo": reg.tipo, "fecha": reg.fecha, "hora": reg.hora, "estado": reg.estado
     }}
+
+#----------------- LISTAR JUSTIFICANTES ------------------
+@app.get("/api/justificantes")
+def listar_justificantes(db: Session = Depends(get_db)):
+    from models import Justificante, Usuario
+    justs = (
+        db.query(Justificante, Usuario)
+        .join(Usuario, Justificante.usuario_id == Usuario.id)
+        .all()
+    )
+    return {"justificantes": [
+        {
+            "id": j.id,
+            "asistencia_id": j.asistencia_id,
+            "usuario_id": j.usuario_id,
+            "nombre": u.nombre,  # <-- nombre del estudiante
+            "fecha_registro": str(j.fecha_registro),
+            "fecha_documento": str(j.fecha_documento),
+            "motivo": j.motivo
+        } for j, u in justs
+    ]}
+
+from pydantic import BaseModel
+
+
+# ------------------ CREAR JUSTIFICANTE ------------------
+class JustificanteCreate(BaseModel):
+    asistencia_id: int
+    usuario_id: int
+    fecha_registro: str
+    fecha_documento: str
+    motivo: str
+
+@app.post("/api/justificantes")
+def crear_justificante(body: JustificanteCreate, db: Session = Depends(get_db)):
+    nuevo = models.Justificante(
+        asistencia_id=body.asistencia_id,
+        usuario_id=body.usuario_id,
+        fecha_registro=body.fecha_registro,
+        fecha_documento=body.fecha_documento,
+        motivo=body.motivo
+    )
+    db.add(nuevo)
+    # Actualiza el estado de la asistencia a "Justificado"
+    asistencia = db.query(models.Asistencia).filter(models.Asistencia.id == body.asistencia_id).first()
+    if asistencia:
+        asistencia.estado = "Justificado"
+    db.commit()
+    db.refresh(nuevo)
+    return {"justificante": {
+        "id": nuevo.id,
+        "asistencia_id": nuevo.asistencia_id,
+        "usuario_id": nuevo.usuario_id,
+        "fecha_registro": str(nuevo.fecha_registro),
+        "fecha_documento": str(nuevo.fecha_documento),
+        "motivo": nuevo.motivo
+    }}
+
+@app.get("/api/justificantes/{justificante_id}")
+def ver_justificante(justificante_id: int, db: Session = Depends(get_db)):
+    j = db.query(models.Justificante).filter(models.Justificante.id == justificante_id).first()
+    if not j:
+        raise HTTPException(status_code=404, detail="Justificante no encontrado")
+    # Si usas JOIN para nombre y rol, inclúyelos aquí
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == j.usuario_id).first()
+    return {
+        "id": j.id,
+        "asistencia_id": j.asistencia_id,
+        "usuario_id": j.usuario_id,
+        "nombre": usuario.nombre if usuario else "",
+        "rol": usuario.rol if usuario else "",
+        "fecha_registro": str(j.fecha_registro),
+        "fecha_documento": str(j.fecha_documento),
+        "motivo": j.motivo,
+        "referencia": j.referencia,
+        "archivo_nombre": j.archivo_nombre,
+        "archivo_url": j.archivo_url
+    }
+
+@app.delete("/api/justificantes/{justificante_id}")
+def eliminar_justificante(justificante_id: int, db: Session = Depends(get_db)):
+    j = db.query(models.Justificante).filter(models.Justificante.id == justificante_id).first()
+    if not j:
+        raise HTTPException(status_code=404, detail="Justificante no encontrado")
+    db.delete(j)
+    db.commit()
+    return {"ok": True}
+
+@app.get("/api/usuarios/{usuario_id}")
+def ver_usuario(usuario_id: int, db: Session = Depends(get_db)):
+    u = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
+    if not u:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return {
+        "id": u.id,
+        "nombre": u.nombre,
+        "cedula": u.cedula,
+        "rol": u.rol,
+        "grupo": u.grupo,
+        "correo": u.correo,
+        "activo": u.activo
+    }
+
+# --------- Estado simple para la ESP32 ----------
+LAST_RESULT = {
+    "estado": "advertencia",
+    "mensaje": "Esperando QR"
+}
+
+@app.get("/api/resultado")
+def resultado_esp32():
+    """
+    Devuelve el último resultado para la ESP32.
+    Nota: este estado es in-memory. Puedes actualizarlo desde otro proceso si lo necesitas.
+    """
+    return {
+        "estado": LAST_RESULT.get("estado", "advertencia"),
+        "mensaje": LAST_RESULT.get("mensaje", "Esperando QR")
+    }
+
+# (Opcional) Endpoint para actualizar manualmente el estado desde pruebas
+class ResultadoSet(BaseModel):
+    estado: str
+    mensaje: str | None = None
+
+@app.post("/api/resultado")
+def set_resultado_esp32(body: ResultadoSet):
+    """
+    Permite fijar el estado que leerá la ESP32.
+    No afecta la lógica de asistencias existente.
+    """
+    LAST_RESULT["estado"] = body.estado
+    if body.mensaje is not None:
+        LAST_RESULT["mensaje"] = body.mensaje
+    return {"ok": True, "estado": LAST_RESULT}
+

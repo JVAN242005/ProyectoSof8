@@ -92,6 +92,9 @@
           <label class="form-label mt-2">Correo</label>
           <input id="userCorreo" type="email" class="form-control">
 
+          <label class="form-label mt-2">Activo</label>
+          <input type="checkbox" id="userActivo" class="form-check-input">
+
         </form>
       </div>
 
@@ -162,14 +165,14 @@ document.getElementById("btnAddUser").addEventListener("click", ()=>{
 
 // Función para editar usuario (llena el modal con los datos)
 window.editUser = async function(id){
-  const users = await UsuariosAPI.listar();
-  const u = users.find(x=>x.id === id);
+  const u = await UsuariosAPI.getUsuario(id);
   document.getElementById("userId").value = u.id;
   document.getElementById("userName").value = u.nombre;
   document.getElementById("userCedula").value = u.cedula;
   document.getElementById("userRol").value = u.rol;
-  document.getElementById("userGrupo").value = u.grupo;
-  document.getElementById("userCorreo").value = u.correo;
+  document.getElementById("userGrupo").value = u.grupo || '';
+  document.getElementById("userCorreo").value = u.correo || '';
+  document.getElementById("userActivo").checked = !!u.activo;
   modalUser.show();
 }
 

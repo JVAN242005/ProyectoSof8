@@ -59,6 +59,11 @@
       });
       if (!res.ok) throw new Error('Error al eliminar usuario');
       return await res.json();
+    },
+    async getUsuario(id) {
+      const res = await fetch(`/api/usuarios/${id}`);
+      if (!res.ok) throw new Error('No se encontró el usuario');
+      return await res.json();
     }
   };
 })();

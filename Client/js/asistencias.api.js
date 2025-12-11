@@ -22,6 +22,7 @@
 (function(){
   const db = window.SimDB, api = window.SimAPI;
   const API_URL = "http://localhost:8000/api";
+  const API_URL_QR = "http://10.92.255.218:8000/api/asistencias/qr";  // Cambia por tu IP real
 
   // Función para convertir registros a CSV
   function csvString(rows, keys){
@@ -60,8 +61,15 @@
     // Listar justificantes
     async listJustificantes() {
       const res = await fetch(`${API_URL}/justificantes`);
-      const data = await res.json();
-      return data.justificantes || [];
+      if (!res.ok) throw new Error("Error al listar justificantes");
+      return (await res.json()).justificantes;
+    },
+
+    // Obtener justificante por ID
+    async getJustificante(id) {
+      const res = await fetch(`${API_URL}/justificantes/${id}`);
+      if (!res.ok) throw new Error("No se encontró el justificante");
+      return await res.json();
     },
 
     // Crear justificante
@@ -72,6 +80,13 @@
         body: JSON.stringify(just)
       });
       if (!res.ok) throw new Error("No se pudo crear justificante");
+      return await res.json();
+    },
+
+    // Eliminar justificante por ID
+    async deleteJustificante(id) {
+      const res = await fetch(`${API_URL}/justificantes/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("No se pudo eliminar el justificante");
       return await res.json();
     },
 
@@ -104,7 +119,7 @@
     // Marcar asistencia por QR
     async marcarQR(qrTexto) {
       try {
-        const res = await fetch(`${API_URL}/asistencias/qr`, {
+        const res = await fetch(API_URL_QR, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ qr_texto: qrTexto })
